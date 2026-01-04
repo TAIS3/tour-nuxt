@@ -1,0 +1,57 @@
+%!Adobe-FontList 1.24
+%Locale:0x804
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Type1
+FontName:AstronBold
+FamilyName:Astron
+StyleName:Bold
+FullName:Astron Bold
+MenuName:Astron
+StyleBits:2
+WritingScript:Roman
+OutlineFileName:D:\项目\01-UI\25_旅游网站\首页_slices\Font\Astron-Bold-2.otf
+DataFormat:sfntData
+UsesStandardEncoding:yes
+isCFF:yes
+hasSVG:no
+hasCOLR:no
+VariableFontType:NonVariableFont
+FileLength:18192
+FileModTime:1561729020
+WeightClass:700
+WidthClass:5
+AngleClass:0
+NameArray:0,Mac,4,Astron Bold
+NameArray:0,Win,1,Astron
+NameArray:0,Win,16,Astron
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:AznauriSquareBold
+FamilyName:Aznauri Square
+StyleName:Bold
+FullName:Aznauri Square Bold
+MenuName:Aznauri Square
+StyleBits:2
+FamilyNameNative:Aznauri Square
+StyleNameNative:Bold
+FullNameNative:Aznauri Square Bold
+WritingScript:Cyrillic
+OutlineFileName:D:\项目\01-UI\25_旅游网站\首页_slices\Font\AznauriSquareBold-4.ttf
+DataFormat:sfntData
+hasSVG:no
+hasCOLR:no
+VariableFontType:NonVariableFont
+FileLength:34232
+FileModTime:1573979298
+WeightClass:700
+WidthClass:5
+AngleClass:0
+NameArray:0,Mac,4,Aznauri Square Bold
+NameArray:0,Win,1,Aznauri Square
+%EndFont
+

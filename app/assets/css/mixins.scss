@@ -1,0 +1,27 @@
+// src/assets/css/mixins.scss
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin break-word {
+  word-wrap: break-word; // 兼容旧浏览器
+  overflow-wrap: break-word; // 推荐，现代浏览器
+  word-break: break-word;
+  hyphens: none; // 禁止加连字符
+}
+
+@mixin center-both($direction: row) {
+  display: flex;
+  flex-direction: $direction;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin center-column($align: flex-start) {
+  display: flex;
+  flex-direction: column;
+  align-items: $align;
+  justify-content: center;
+}

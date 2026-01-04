@@ -1,0 +1,28 @@
+// app/middleware/i18n-dynamic.global.js
+export default defineNuxtRouteMiddleware(async (to, from) => {
+  // 1. 忽略根路径 (由 pages/index.vue 处理) 和 API/静态资源
+  if (to.path === '/' || to.path.startsWith('/api') || to.path.startsWith('/_nuxt')) {
+    return
+  }
+
+  // 2. 尝试从 URL 获取 lang
+  // 假设结构是 /[lang]/... -> params.lang
+  const langParam = to.params.lang
+
+  // 如果当前路由没有 [lang] 参数 (比如 404 页)，可能不需要处理
+  if (!langParam) return
+
+  const langStore = useLangStore()
+
+  // 3. 调用 Store 进行初始化 (加载列表、校验、加载JSON)
+  // 这一步是在服务端也会执行的，所以首屏就有数据
+  const isValid = await langStore.initEnv(langParam)
+
+  // 4. 如果语言无效 (比如用户瞎写 /xx/home)，重定向到默认语言
+  if (!isValid) {
+    const defaultLang = 'en'
+    // 替换 URL 中的错误语言部分
+    const newPath = to.fullPath.replace(`/${langParam}`, `/${defaultLang}`)
+    return navigateTo(newPath, { replace: true })
+  }
+})

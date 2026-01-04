@@ -1,0 +1,30 @@
+{
+  "id": "5055116",
+  "name": "Tour",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "旅游项目",
+  "glyphs": [
+    {
+      "icon_id": "1028",
+      "name": "日历",
+      "font_class": "date",
+      "unicode": "e600",
+      "unicode_decimal": 58880
+    },
+    {
+      "icon_id": "2768300",
+      "name": "金钱",
+      "font_class": "jinqian",
+      "unicode": "e618",
+      "unicode_decimal": 58904
+    },
+    {
+      "icon_id": "5864319",
+      "name": "容纳人数人数",
+      "font_class": "people",
+      "unicode": "e790",
+      "unicode_decimal": 59280
+    }
+  ]
+}

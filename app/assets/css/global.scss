@@ -1,0 +1,24 @@
+// src/assets/css/global.scss
+@use './reset.css';
+@use './bootstrap-icons.css';
+@use './iconfont.css';
+@forward './variables.scss';
+@forward './mixins.scss';
+
+/* Astron Bold */
+@font-face {
+  font-family: 'AstronBold';
+  src: url('/static/fonts/Astron-Bold-2.otf') format('opentype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Aznauri Square Bold */
+@font-face {
+  font-family: 'AznauriSquareBold';
+  src: url('/static/fonts/AznauriSquareBold-4.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
