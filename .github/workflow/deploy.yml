@@ -1,0 +1,67 @@
+name: Deploy Nuxt3 to Server
+
+on:
+  push:
+    branches:
+      - main  # 监听 main 分支，你一推代码它就开始干活
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 下载代码
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. 准备 Node.js 环境
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # 3. 安装依赖并构建 (在 GitHub 的电脑上跑)
+      - name: Install & Build
+        run: |
+          npm install
+          npm run build
+
+      # 4. 打包构建产物 (.output 是 Nuxt3 的核心)
+      - name: Compress output
+        run: tar -czf release.tar.gz .output
+
+      # 5. 上传压缩包到服务器 (使用 SCP)
+      - name: Upload via SCP
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          source: "release.tar.gz"
+          target: "/www/wwwroot/eztripcn-nuxt/"
+
+      # 6. 远程指挥服务器：解压 & 重启
+      - name: Remote SSH Commands
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /www/wwwroot/eztripcn-nuxt/
+            
+            # 解压新包 (会自动覆盖旧的)
+            tar -xzf release.tar.gz
+            
+            # 删掉压缩包
+            rm release.tar.gz
+            
+            # 重启服务
+            # 逻辑：如果服务已存在就 reload (无缝重启)，不存在就 start (新建)
+            pm2 reload eztrip-nuxt || pm2 start .output/server/index.mjs --name "eztrip-nuxt"
+            
+            # 保存 PM2 列表 (防止重启服务器后服务丢了)
+            pm2 save
