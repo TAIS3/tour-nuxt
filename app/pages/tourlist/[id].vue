@@ -135,9 +135,10 @@ const handlePageChange = (page) => {
 // 6. SEO 设置
 // ----------------------------------------------------------------
 useHead({
-  title: computed(() => stripHtml(currentCategory.value.title) || 'Tour List'),
+  title: computed(() => stripHtml(currentCategory.value.seo_title) || 'Tour List'),
   meta: [
-    { name: 'description', content: computed(() => stripHtml(currentCategory.value.subtitle) || '') }
+    { name: 'keywords', content: computed(() => stripHtml(currentCategory.value.seo_keywords) || 'Best Tours') },
+    { name: 'description', content: computed(() => stripHtml(currentCategory.value.seo_description) || '') }
   ]
 })
 </script>

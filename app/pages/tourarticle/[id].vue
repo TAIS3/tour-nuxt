@@ -178,14 +178,11 @@ const recommendList = computed(() => {
 // ----------------------------------------------------------------
 // 5. SEO 设置
 // ----------------------------------------------------------------
-
 useHead({
-  title: computed(() => stripHtml(tour.value.langData?.name) || 'Tour Details'),
+  title: computed(() => stripHtml(tour.value.langData?.seo_title) || 'Tour List'),
   meta: [
-    { 
-      name: 'description', 
-      content: computed(() => stripHtml(tour.value.langData?.highlights_content || '')) 
-    }
+    { name: 'keywords', content: computed(() => stripHtml(tour.value.langData?.seo_keywords) || 'Best Tours') },
+    { name: 'description', content: computed(() => stripHtml(tour.value.langData?.seo_description) || '') }
   ]
 })
 </script>

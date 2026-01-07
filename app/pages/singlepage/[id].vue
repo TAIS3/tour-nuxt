@@ -102,13 +102,10 @@ const currentCategory = computed(() => {
 // 5. SEO 设置
 // ----------------------------------------------------------------
 useHead({
-  title: computed(() => stripHtml(currentCategory.value.title) || 'EZTRIPCN'),
+  title: computed(() => stripHtml(currentCategory.value.seo_title) || 'Tour List'),
   meta: [
-    { 
-      name: 'description', 
-      // 简单去除 HTML 标签作为描述
-      content: computed(() => (stripHtml(currentCategory.value.subtitle) || '').replace(/<[^>]+>/g, '').slice(0, 150)) 
-    }
+    { name: 'keywords', content: computed(() => stripHtml(currentCategory.value.seo_keywords) || 'Best Tours') },
+    { name: 'description', content: computed(() => stripHtml(currentCategory.value.seo_description) || '') }
   ]
 })
 </script>

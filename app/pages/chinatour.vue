@@ -119,9 +119,11 @@ const getSectionStyle = (item) => {
 
 // 5. SEO 设置
 useHead({
-  title: computed(() => t('China Tours') + ' - EZTRIPCN'), // 假设你有对应的翻译 Key，或者直接写死字符串
+  title: computed(() => t('commonConfig.chinatourTitle') === 'commonConfig.chinatourTitle' ? 'EZTRIPCN' : t('commonConfig.chinatourTitle')),
   meta: [
-    { name: 'description', content: 'Explore the best China Tours with us.' }
+    // 这里的 content 记得加上默认值防止报错
+    { name: 'keywords', content: computed(() => t('commonConfig.chinatourKeywords') === 'commonConfig.chinatourKeywords' ? 'Best Tours' : t('commonConfig.chinatourKeywords')) },
+    { name: 'description', content: computed(() => t('commonConfig.chinatourDescription') === 'commonConfig.chinatourDescription' ? 'Best Tours' : t('commonConfig.chinatourDescription')) }
   ]
 })
 </script>
