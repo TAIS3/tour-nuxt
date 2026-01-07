@@ -199,10 +199,11 @@ const getSectionStyle = (item) => {
 
 // 5. SEO 设置
 useHead({
-  title: computed(() => t('commonConfig.home') + ' - EZTRIPCN'),
+  title: computed(() => t('commonConfig.webTitle') || 'EZTRIPCN'),
   meta: [
     // 这里的 content 记得加上默认值防止报错
-    { name: 'description', content: computed(() => banner1.value?.subtitle || 'Best Tours') }
+    { name: 'keywords', content: computed(() => t('commonConfig.webKeywords') || 'Best Tours') },
+    { name: 'description', content: computed(() => t('commonConfig.webDescription') || 'Best Tours') }
   ]
 })
 </script>

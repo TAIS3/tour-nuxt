@@ -79,9 +79,15 @@
             </div>
             <div class="p-3">
               <div class="recommend-item" v-for="(item, index) in recommendList.data" :key="index">
-                <img :src="getImageUrl(item.thumb_image)" :alt="item.name" class="recommend-img" />
+                <NuxtLink :to="localePath(`/tourarticle/${item.id}`)" class="img-wrap d-block">
+                  <img :src="getImageUrl(item.thumb_image)" :alt="item.name" class="recommend-img" />
+                </NuxtLink>
                 <div class="recommend-text">
-                  <h5>{{ item.name }}</h5>
+                  <h5>
+                    <NuxtLink :to="localePath(`/tourarticle/${item.id}`)" class="img-wrap d-block">
+                      {{ item.name }}
+                    </NuxtLink>
+                  </h5>
                   <h6>{{ item.sub_name }}</h6>
                   <p>
                     {{ t('tourArticle.price') }}
@@ -108,6 +114,9 @@
 const route = useRoute()
 const { t, locale } = useI18n()
 const { getTourDetail, getTourRecommend } = useApi()
+
+// 这个工具会自动处理 '/tourarticle/123' -> '/en/tourarticle/123' (取决于当前语言)
+const localePath = useLocalePath()
 
 // 2. 响应式参数
 const tourId = computed(() => route.params.id)
