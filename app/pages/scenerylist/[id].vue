@@ -13,7 +13,6 @@
         />
       </div>
     </section>
-
     <div class="container my-4 sm:my-8 px-2">
       <template v-if="currentProducts && currentProducts.length">
         <CommonList :products="currentProducts" />
@@ -38,7 +37,7 @@
 // 1. 自动导入
 const route = useRoute()
 const { locale } = useI18n()
-const { getTourList, getTourCategoryDetail } = useApi()
+const { getSceneryList, getSceneryCategoryDetail } = useApi()
 
 // 2. 响应式状态
 const categoryId = computed(() => route.params.id)
@@ -49,14 +48,12 @@ const itemsPerPage = 9
 // 3. 获取分类详情 (Banner数据)
 // ----------------------------------------------------------------
 const { data: categoryRaw } = await useAsyncData(
-  () => `category-${categoryId.value}-${locale.value}`,
+  () => `scenery-category-${categoryId.value}-${locale.value}`,
   async () => {
-    // ✅ 你的建议：请求前先判断 ID 是否存在
     if (!categoryId.value) return null
     
-    const res = await getTourCategoryDetail({ id: categoryId.value })
-    // 🔴 核心修复：必须取 .value！(解决 Hydration Mismatch 报错)
-    // res.data 是一个 Ref，必须取 .value 拿到纯数据返回给 Nuxt
+    const res = await getSceneryCategoryDetail({ id: categoryId.value })
+    
     return res.data.value || null
   },
   {
@@ -67,6 +64,7 @@ const { data: categoryRaw } = await useAsyncData(
 // immediate: true 保证了 SSR 首屏渲染时也会执行这个检查
 watch(categoryRaw, (newVal) => {
   // 打印日志方便调试，看看数据到底是不是 code: 404
+  console.log('API Result:', newVal) 
 
   if (newVal?.code === 404) {
     showError({
@@ -79,42 +77,33 @@ watch(categoryRaw, (newVal) => {
 
 // 数据映射
 const currentCategory = computed(() => {
-  // 因为上面返回了纯数据，这里 categoryRaw.value 就是那个对象
   const apiRes = categoryRaw.value || {}
-  // 兼容直接返回数据或 { data: ... } 结构
   const data = apiRes.data || apiRes 
   
   if (!data || !data.id) return {}
-
   return {
     id: data.id,
     settype: data.settype,
     image: data.bannerimage,
     title: data.langData?.bannertitle || '',
-    subtitle: data.langData?.bannersubtitle || '',
     content: data.langData?.bannercontent || '',
-    seo_title: data.langData?.seo_title || '',
-    seo_keywords: data.langData?.seo_keywords || '',
-    seo_description: data.langData?.seo_description || '',
   }
 })
 
 // ----------------------------------------------------------------
-// 4. 获取线路列表
+// 4. 获取景点列表
 // ----------------------------------------------------------------
-const { data: tourListRaw } = await useAsyncData(
-  () => `tourlist-${categoryId.value}-${currentPage.value}-${locale.value}`,
+const { data: sceneryListRaw } = await useAsyncData(
+  () => `scenerylist-${categoryId.value}-${currentPage.value}-${locale.value}`,
   async () => {
-    // ✅ 你的建议：请求前先判断 ID 是否存在
     if (!categoryId.value) return null
     
-    const res = await getTourList({
+    const res = await getSceneryList({
       category_id: categoryId.value,
       page: currentPage.value,
       limit: itemsPerPage
     })
     
-    // 🔴 核心修复：必须取 .value！(解决 Hydration Mismatch 报错)
     return res.data.value || null
   },
   {
@@ -124,13 +113,13 @@ const { data: tourListRaw } = await useAsyncData(
 
 // 数据处理
 const currentProducts = computed(() => {
-  const apiRes = tourListRaw.value || {}
+  const apiRes = sceneryListRaw.value || {}
   const data = apiRes.data || apiRes
   return data.rows || []
 })
 
 const totalPages = computed(() => {
-  const apiRes = tourListRaw.value || {}
+  const apiRes = sceneryListRaw.value || {}
   const data = apiRes.data || apiRes
   const total = data.total || 0
   return Math.ceil(total / itemsPerPage)
@@ -150,9 +139,9 @@ const handlePageChange = (page) => {
 // 6. SEO 设置
 // ----------------------------------------------------------------
 useHead({
-  title: computed(() => stripHtml(currentCategory.value.seo_title) || 'Tour List'),
+  title: computed(() => stripHtml(currentCategory.value.seo_title) || 'Scenery List'),
   meta: [
-    { name: 'keywords', content: computed(() => stripHtml(currentCategory.value.seo_keywords) || 'Best Tours') },
+    { name: 'keywords', content: computed(() => stripHtml(currentCategory.value.seo_keywords) || 'Best Scenery') },
     { name: 'description', content: computed(() => stripHtml(currentCategory.value.seo_description) || '') }
   ]
 })

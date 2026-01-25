@@ -81,6 +81,38 @@ export const useApi = () => {
         body: { lang: locale } // 这里显式传了 lang，会覆盖掉自动注入的(如果合并逻辑没问题)
                                // 或者因为 langStore 的值可能还没变，这里显式传更安全
       })
+    },
+
+    // 11.景点列表
+    // payload 通常包含分页参数 page, limit 等
+    getSceneryList: (payload) => {
+      return useHttp('/api/xilutour.scenery/lists', {
+        method: 'POST',
+        body: payload
+      })
+    },
+
+    // 12.景点分类详情
+    getSceneryCategoryDetail: (payload) => {
+      return useHttp('/api/xilutour.scenery/category_detail', {
+        method: 'POST',
+        body: payload
+      })
+    },
+
+    // 13.获取景点分类
+    getSceneryCategories: () => {
+      return useHttp('/api/xilutour.scenery/scenery_category', {
+        method: 'POST'
+      })
+    },
+
+    // 14.获取景点详情
+    getSceneryDetail: (payload) => {
+      return useHttp('/api/xilutour.scenery/detail', {
+        method: 'POST',
+        body: payload
+      })
     }
   }
 }
