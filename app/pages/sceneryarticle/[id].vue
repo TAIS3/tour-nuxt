@@ -1,158 +1,166 @@
 <template>
-  <div class="page-wrapper">
-    <section
-      class="hero-section section-bg-image"
-      id="section_top"
-      :style="bannerStyle"
-    >
-      <div class="container">
-        <div class="row">
-          <div class="col-12 text-center center-both-column">
-            <h1 class="text-white">Scenery Details</h1>
-          </div>
-        </div>
+  <div class="page-detail-wrapper">
+    <div class="hero-banner" :style="{ backgroundImage: `url(${scenery.thumb_image || '/placeholder.jpg'})` }">
+      <div class="hero-overlay"></div>
+      <div class="container h-100 d-flex align-items-end pb-5 d-none d-lg-flex">
+        <h1 class="text-white fw-bold">{{ scenery.name }}</h1>
       </div>
-      <svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1918.73 59.75">
-        <path fill="#ffffff" d="M1163.86,59.75c-58.71-4.12-118.48-59.75-178.39-59.75s-120.87,55.63-180.55,59.75h358.94Z" />
-        <path fill="#ffffff" d="M1688.6,30c-57.05,0-122.46,26.96-193.64,29.75h423.77c-8.95-2.86-96.66-29.75-230.13-29.75Z" />
-        <path fill="#ffffff" d="M1475.65,59.75c-46.85-2.79-96.03-29.75-146.85-29.75s-98.81,26.96-149.83,29.75h296.68Z" />
-        <path fill="#ffffff" d="M404.97,59.75c-76.02-3.37-144.97-39.75-203.58-39.75C82.97,20,6.79,56.38,0,59.75h404.97Z" />
-        <path fill="#ffffff" d="M784.44,59.75c-64.66-2.29-128.22-19.75-189.45-19.75s-114.69,17.46-167.8,19.75h357.25Z" />
-      </svg>
-    </section>
+    </div>
 
-    <div class="container py-5 main-container">
-      
-      <div v-if="pending" class="loading-skeleton py-5 text-center text-muted">
+    <div class="container main-container">
+      <div v-if="pending" class="text-center py-5">
         <div class="spinner-border text-primary" role="status"></div>
-        <div class="mt-2">Loading details...</div>
       </div>
 
-      <div v-else-if="tour && tour.id" class="row g-4">
+      <div v-else-if="scenery && scenery.id" class="row g-4">
         
         <div class="col-lg-8">
           
-          <div class="content-card mb-4">
-            <div class="d-flex justify-content-between align-items-start mb-3">
+          <div class="info-card shadow-sm">
+            <div class="d-flex justify-content-between align-items-start">
               <div>
-                <span class="badge bg-success mb-2" v-if="tour.level_id">{{ tour.level_id }}A景区</span>
-                <h2 class="content-title">{{ tour.langData?.name }}</h2>
+                <div class="price-row mb-1">
+                  <span class="currency">¥</span>
+                  <span class="amount">{{ parseFloat(scenery.salesprice) }}</span>
+                  <span class="suffix">起</span>
+                </div>
               </div>
-              <div class="share-btn d-none d-md-block">
-                <button class="btn btn-light btn-sm rounded-circle shadow-sm">
-                  <span class="iconfont icon-share"></span>
-                </button>
-              </div>
+              <div class="view-count small">{{ scenery.view_count || 0 }}人浏览</div>
             </div>
 
-            <div class="info-grid">
-              <div class="info-box">
-                <div class="icon-wrap bg-green-light text-green">
-                  <span class="iconfont icon-jinqian"></span>
-                </div>
-                <div class="text-wrap">
-                  <small>{{ t('tourArticle.price') }}</small>
-                  <strong>{{ tour.salesprice }}</strong>
-                </div>
+            <div class="title-row d-flex align-items-center gap-2 mb-2">
+              <span class="level-badge" v-if="scenery.level_id">{{ scenery.level_id }}A</span>
+              <h1 class="scenery-title mb-0">{{ scenery.name }}</h1>
+            </div>
+
+            <p class="scenery-desc">
+              {{ scenery.introduce || '暂无简介' }}
+            </p>
+
+            <div class="meta-box mt-3">
+              <div class="meta-row">
+                <span class="label theme-color">开放时间</span>
+                <span class="value">{{ scenery.work_time || '09:00 - 18:00' }}</span>
+                <i class="iconfont icon-time text-warning ms-2"></i>
               </div>
-              <div class="info-box">
-                <div class="icon-wrap bg-yellow-light text-yellow">
-                  <span class="iconfont icon-date"></span>
-                </div>
-                <div class="text-wrap">
-                  <small>{{ t('tourArticle.date') }}</small>
-                  <strong>{{ tour.series_days }} {{ t('tourArticle.days') }}</strong>
-                </div>
-              </div>
-              <div class="info-box">
-                <div class="icon-wrap bg-cyan-light text-cyan">
-                  <span class="iconfont icon-people"></span>
-                </div>
-                <div class="text-wrap">
-                  <small>{{ t('tourArticle.people') }}</small>
-                  <strong>{{ tour.team_count }}</strong>
-                </div>
+              <div class="divider"></div>
+              <div class="meta-row" @click="openMap">
+                <span class="value address-text text-truncate">{{ scenery.address }}</span>
+                <i class="iconfont icon-location theme-color ms-auto cursor-pointer"></i>
               </div>
             </div>
           </div>
 
-          <div class="sticky-tabs-wrapper">
-            <nav class="nav nav-pills nav-justified custom-tabs">
-              <a class="nav-link" :class="{ active: currentTab === 'highlights' }" @click.prevent="scrollTo('highlights')">
-                {{ t('tourArticle.travelHighlights') }}
-              </a>
-              <a class="nav-link" :class="{ active: currentTab === 'itinerary' }" @click.prevent="scrollTo('itinerary')">
-                {{ t('tourArticle.itineraryOverview') }}
-              </a>
-              <a class="nav-link" :class="{ active: currentTab === 'cost' }" @click.prevent="scrollTo('cost')">
-                {{ t('tourArticle.costBreakdown') }}
-              </a>
-            </nav>
+          <div class="tabs-header sticky-top bg-white shadow-sm mt-3" ref="tabsRef">
+            <div 
+              class="tab-item" 
+              :class="{ active: currentTab === 'projects' }" 
+              @click="currentTab = 'projects'"
+            >
+              景区项目
+              <div class="indicator"></div>
+            </div>
+            <div 
+              class="tab-item" 
+              :class="{ active: currentTab === 'detail' }" 
+              @click="currentTab = 'detail'"
+            >
+              景区详情
+              <div class="indicator"></div>
+            </div>
+            <div 
+              class="tab-item" 
+              :class="{ active: currentTab === 'cost' }" 
+              @click="currentTab = 'cost'"
+            >
+              费用说明
+              <div class="indicator"></div>
+            </div>
+            <div 
+              class="tab-item" 
+              :class="{ active: currentTab === 'mustread' }" 
+              @click="currentTab = 'mustread'"
+            >
+              行程必看
+              <div class="indicator"></div>
+            </div>
           </div>
 
-          <div class="content-card mt-3">
-            <section id="highlights" class="detail-section">
-              <h3 class="section-header"><span class="line"></span>{{ t('tourArticle.travelHighlights') }}</h3>
-              <div class="rich-text" v-html="safeContent(tour.langData?.highlights_content)"></div>
-            </section>
-
-            <hr class="section-divider">
-
-            <section id="itinerary" class="detail-section">
-              <h3 class="section-header"><span class="line"></span>{{ t('tourArticle.itineraryOverview') }}</h3>
-              <div class="rich-text" v-html="safeContent(tour.langData?.introduction_content)"></div>
-            </section>
-
-            <hr class="section-divider">
-
-            <section id="cost" class="detail-section">
-              <h3 class="section-header"><span class="line"></span>{{ t('tourArticle.costBreakdown') }}</h3>
-              <div class="rich-text" v-html="safeContent(tour.langData?.fee_explain)"></div>
-            </section>
+          <div class="tab-content mt-3">
             
-            <hr class="section-divider">
-            
-            <section id="mustread" class="detail-section">
-              <h3 class="section-header"><span class="line"></span>{{ t('tourArticle.mustRead') }}</h3>
-              <div class="rich-text" v-html="safeContent(tour.langData?.see_content)"></div>
-            </section>
+            <div v-if="currentTab === 'projects'" class="projects-grid">
+              <div v-for="item in scenery.projects" :key="item.id" class="project-card shadow-sm">
+                <div class="thumb-wrapper">
+                  <img :src="item.thumb_image" :alt="item.name">
+                </div>
+                <div class="card-info">
+                  <h3 class="item-name text-truncate">{{ item.name }}</h3>
+                  <div class="bottom-action mt-auto pt-3 d-flex justify-content-between align-items-center">
+                    <div class="price text-danger">
+                      <small>¥</small><span class="num">{{ parseFloat(item.salesprice) }}</span>
+                    </div>
+                    <button class="btn-book-sm" @click="addToCart(item)">预定</button>
+                  </div>
+                </div>
+              </div>
+              <div v-if="!scenery.projects?.length" class="text-center py-4 text-muted">暂无项目</div>
+            </div>
+
+            <div v-else class="rich-text-card shadow-sm p-3 bg-white rounded">
+              <div v-if="currentTab === 'detail'" v-html="scenery.content || '暂无详情'"></div>
+              <div v-if="currentTab === 'cost'" v-html="scenery.statement || '暂无费用说明'"></div>
+              <div v-if="currentTab === 'mustread'" v-html="scenery.travel_know || '暂无行程须知'"></div>
+            </div>
+
           </div>
         </div>
 
-        <div class="col-lg-4">
+        <div class="col-lg-4 d-none d-lg-block">
           
-          <div class="booking-card sidebar-sticky mb-4 d-none d-lg-block">
-            <div class="price-area">
-              <span class="currency">¥</span>
-              <span class="amount">{{ parseFloat(tour.salesprice) || 0 }}</span>
-              <span class="unit">/{{ t('tourArticle.person') || 'p' }}</span>
+          <div class="sidebar-card mb-4 sticky-action">
+            <h5 class="card-title mb-3">预订中心</h5>
+            
+            <div class="mini-cart mb-3" v-if="cart.length > 0">
+              <div v-for="(cItem, idx) in cart" :key="idx" class="d-flex justify-content-between mb-2 small">
+                <span>{{ cItem.name }}</span>
+                <span class="text-danger">¥{{ cItem.salesprice }}</span>
+              </div>
+              <div class="border-top pt-2 fw-bold d-flex justify-content-between">
+                <span>总计:</span>
+                <span class="text-danger">¥{{ cartTotal }}</span>
+              </div>
             </div>
-            <button class="btn btn-primary btn-lg w-100 mb-3 shadow-sm fw-bold">
-              {{ t('common.bookNow') || 'Book Now' }}
-            </button>
-            <div class="d-flex justify-content-between text-muted small">
-              <span><i class="iconfont icon-check-circle text-success"></i> No Shopping</span>
-              <span><i class="iconfont icon-check-circle text-success"></i> Free Cancel</span>
+            <div v-else class="text-muted small mb-3 text-center bg-light p-2 rounded">
+              请选择左侧项目加入行程
+            </div>
+
+            <div class="d-grid gap-2">
+              <button class="btn btn-theme fw-bold">立即购买</button>
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary flex-grow-1" @click="toggleCollect">
+                  <i class="iconfont" :class="isCollected ? 'icon-star-fill text-warning' : 'icon-star'"></i> 
+                  {{ isCollected ? '已收藏' : '收藏' }}
+                </button>
+                <button class="btn btn-outline-secondary flex-grow-1">
+                  <i class="iconfont icon-service"></i> 联系客服
+                </button>
+              </div>
             </div>
           </div>
 
           <div class="sidebar-card">
-            <div class="card-header-custom">
-              <h5>{{ t('tourArticle.mayLike') }}</h5>
-            </div>
-            <div class="list-group list-group-flush">
+            <h5 class="card-title mb-3">热门推荐</h5>
+            <div class="recommend-list">
               <NuxtLink 
-                v-for="(item, index) in recommendList" 
-                :key="index"
-                :to="localePath(`/tourarticle/${item.id}`)" 
-                class="list-group-item d-flex gap-3 py-3 border-0 border-bottom px-0"
+                v-for="rec in recommendList" 
+                :key="rec.id" 
+                :to="localePath(`/scenery/${rec.id}`)"
+                class="d-flex gap-3 py-3 border-bottom text-decoration-none text-dark"
               >
-                <div class="thumb-wrapper">
-                  <img :src="getImageUrl(item.thumb_image)" class="rounded recommend-thumb" :alt="item.name">
-                </div>
-                <div class="recommend-info d-flex flex-column justify-content-between">
-                  <h6 class="mb-1 text-truncate-2">{{ item.name }}</h6>
-                  <div class="text-danger fw-bold mt-auto">¥{{ item.salesprice }}</div>
+                <img :src="rec.thumb_image" class="rounded" width="80" height="60" object-fit="cover">
+                <div class="flex-grow-1">
+                  <h6 class="mb-1 text-truncate-2">{{ rec.name }}</h6>
+                  <div class="text-danger fw-bold">¥{{ parseFloat(rec.salesprice) }}</div>
                 </div>
               </NuxtLink>
             </div>
@@ -165,17 +173,22 @@
 
     <div class="mobile-bottom-bar d-lg-none">
       <div class="icons">
-        <NuxtLink :to="localePath('/')" class="icon-btn">
-          <span class="iconfont icon-home"></span>
-          <span>Home</span>
-        </NuxtLink>
+        <div class="icon-btn" @click="toggleCollect">
+          <i class="iconfont" :class="isCollected ? 'icon-star-fill text-warning' : 'icon-star'"></i>
+          <span>收藏</span>
+        </div>
         <div class="icon-btn">
-          <span class="iconfont icon-service"></span>
-          <span>Service</span>
+          <i class="iconfont icon-service"></i>
+          <span>客服</span>
+        </div>
+        <div class="icon-btn position-relative">
+          <i class="iconfont icon-cart"></i>
+          <span>购物车</span>
+          <span v-if="cart.length" class="badge rounded-pill bg-danger position-absolute top-0 start-100 translate-middle-x" style="font-size: 10px;">{{ cart.length }}</span>
         </div>
       </div>
-      <button class="btn btn-primary flex-grow-1 ms-3 rounded-pill fw-bold shadow-sm">
-        ¥{{ parseFloat(tour?.salesprice) || 0 }} Book Now
+      <button class="btn btn-theme flex-grow-1 ms-3 rounded-pill fw-bold">
+        ¥{{ cartTotal }} 立即购买
       </button>
     </div>
 
@@ -185,436 +198,321 @@
 </template>
 
 <script setup>
-// 1. 导入
-// 假设 safeContent, getImageUrl 等工具函数已经在 utils/common.js 并自动导入
-// 如果没有自动导入，请手动 import { getImageUrl, safeContent } from '@/utils/common'
+// script 部分逻辑保持不变，不需要修改
 const route = useRoute()
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
-// 假设 useApi 封装了 API 请求
-const { getTourDetail, getTourRecommend } = useApi()
+const { getSceneryDetail, getTourRecommend } = useApi()
 
-// 2. 状态与参数
-const tourId = computed(() => route.params.id)
-const currentTab = ref('highlights')
-// Banner 背景图 (可根据详情图动态替换，这里使用默认)
-const bannerImg = '/static/images/page9_banner.png' 
+const sceneryId = computed(() => route.params.id)
+const currentTab = ref('projects')
+const cart = ref([])
+const isCollected = ref(false)
 
-// 计算 Banner 样式
-const bannerStyle = computed(() => {
-  return {
-    backgroundImage: `url(${bannerImg})`,
-    // 这里不再需要复杂的 height calc，CSS 中已固定高度
-  }
+const cartTotal = computed(() => {
+  return cart.value.reduce((sum, item) => sum + parseFloat(item.salesprice), 0).toFixed(2)
 })
 
-// ----------------------------------------------------------------
-// 3. 数据获取 (SSR + 404 处理)
-// ----------------------------------------------------------------
+const addToCart = (item) => {
+  cart.value.push(item)
+}
+
+const toggleCollect = () => {
+  isCollected.value = !isCollected.value
+}
+
+const openMap = () => {
+  const { lat, lng, address, name } = scenery.value
+  if (lat && lng) {
+    const url = `https://uri.amap.com/marker?position=${lng},${lat}&name=${name}&address=${address}&coordinate=gaode&callnative=1`
+    window.open(url, '_blank')
+  }
+}
+
 const { data: pageDataRaw, pending } = await useAsyncData(
-  // Key: 加上 tourId 和 locale 确保切换时缓存隔离
-  () => `tour-detail-${tourId.value}-${locale.value}`,
-  
+  () => `scenery-detail-${sceneryId.value}-${locale.value}`,
   async () => {
-    // 基础校验
-    if (!tourId.value) return null
-    
-    // 并行请求：详情 + 推荐
-    const [tourRes, recommendRes] = await Promise.all([
-      getTourDetail({ id: tourId.value }),
+    if (!sceneryId.value) return null
+    const [sceneryRes, recommendRes] = await Promise.all([
+      getSceneryDetail({ id: sceneryId.value }),
       getTourRecommend({ number: 5 })
     ])
-    
-    // 这里的返回值必须解包 .value，否则会引起 Hydration Mismatch
     return {
-      tour: tourRes.data.value || null,
+      scenery: sceneryRes.data.value || null,
       recommend: recommendRes.data.value || [] 
     }
   },
-  {
-    watch: [tourId, locale] // 监听 ID 或语言变化自动重新请求
-  }
+  { watch: [sceneryId, locale] }
 )
 
-// ----------------------------------------------------------------
-// 4. 监听与计算属性
-// ----------------------------------------------------------------
-
-// 监听 404 错误跳转
 watch(pageDataRaw, (newVal) => {
-  // 如果 API 返回的 code 是 404，或者数据本身是 null
-  if (!newVal || newVal.tour === null || newVal.tour?.code === 404) {
-    showError({
-      statusCode: 404,
-      message: '该线路不存在或已下架',
-      fatal: true // 强制渲染 error.vue
-    })
+  if (!newVal || newVal.scenery === null || newVal.scenery?.code === 404) {
+    showError({ statusCode: 404, message: '该景点不存在或已下架', fatal: true })
   }
 }, { immediate: true, deep: true })
 
-// 格式化后的 Tour 数据
-const tour = computed(() => {
-  const data = pageDataRaw.value?.tour
-  // 兼容直接返回数据对象 或 嵌套在 data 字段里的情况
-  return data?.data || data || {}
-})
+const scenery = computed(() => pageDataRaw.value?.scenery?.data || {})
+const recommendList = computed(() => Array.isArray(pageDataRaw.value?.recommend) ? pageDataRaw.value.recommend : (pageDataRaw.value?.recommend?.data || []))
 
-// 格式化后的推荐列表
-const recommendList = computed(() => {
-  const data = pageDataRaw.value?.recommend
-  // 兼容数组直接返回 或 {data: []} 结构
-  return Array.isArray(data) ? data : (data?.data || [])
-})
-
-// ----------------------------------------------------------------
-// 5. SEO 设置
-// ----------------------------------------------------------------
 useHead({
-  title: computed(() => tour.value.langData?.seo_title || tour.value.langData?.name || 'Tour Detail'),
+  title: computed(() => scenery.value.name || '景点详情'),
   meta: [
-    { name: 'keywords', content: computed(() => tour.value.langData?.seo_keywords || '') },
-    { name: 'description', content: computed(() => tour.value.langData?.seo_description || '') }
+    { name: 'description', content: computed(() => scenery.value.introduce || '') }
   ]
 })
-
-// ----------------------------------------------------------------
-// 6. 交互逻辑 (Tab 滚动)
-// ----------------------------------------------------------------
-const scrollTo = (id) => {
-  currentTab.value = id
-  const el = document.getElementById(id)
-  if (el) {
-    // 偏移量：头部导航高度 + Sticky Tab 高度 + 缓冲
-    const offset = 80 
-    const top = el.getBoundingClientRect().top + window.pageYOffset - offset
-    window.scrollTo({ top, behavior: 'smooth' })
-  }
-}
 </script>
 
 <style lang="scss" scoped>
-// 定义主题变量 (建议在 global.scss 中定义，这里为了独立性写出)
 
+// 定义一些局部辅助变量，映射到你提供的全局变量
+// $mainColor 是你的主色调 (#404059 深色)
+// $primaryColor 是次要文字颜色 (#686d73 灰色)
+// $darkMainColor 是主要文字颜色 (#2b2b3e 深黑)
+$theme-color: $mainColor; 
+$text-main: $darkMainColor;
+$text-sub: $primaryColor;
+$bg-page: #f5f7fa; // 页面背景暂时保持浅灰，以突出白色卡片
 
-.page-wrapper {
+.page-detail-wrapper {
   background-color: $whiteColor;
   min-height: 100vh;
 }
 
-/* ================= 1. Banner 区域 ================= */
-.hero-section {
-  position: relative;
+// Banner
+.hero-banner {
+  height: 260px;
   background-size: cover;
   background-position: center;
-  height: 420px; // 固定高度，确保在所有设备一致
-  display: flex;
-  align-items: center;
-  margin-bottom: 0;
-
+  position: relative;
+  @media (min-width: 992px) {
+    height: 400px;
+  }
   .hero-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.5));
-    z-index: 1;
-  }
-  
-  .container {
-    position: relative;
-    z-index: 2; // 确保文字在遮罩之上
-    margin: 0 auto;
-    padding: 0;
-    height: 100%;
-    .row {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      h1 {
-        font-size: clamp(18px, 6.5vw, 70px);
-        font-family: 'AznauriSquareBold', 'Microsoft YaHei', Arial, sans-serif;
-      }
-    }
-  }
-
-  .hero-title {
-    font-size: clamp(24px, 5vw, 48px);
-    font-weight: 700;
-    text-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    margin-bottom: 10px;
-    font-family: 'AznauriSquareBold', sans-serif;
-  }
-
-  .hero-subtitle {
-    font-size: clamp(14px, 3vw, 18px);
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-  }
-
-  // 波浪 SVG 分割线
-  .wave-divider {
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 100%;
-    line-height: 0;
-    z-index: 3;
-    svg {
-      width: 100%;
-      height: 40px; // 控制波浪高度
-      @media (min-width: 768px) {
-        height: 60px;
-      }
-    }
-    // path {
-    //   fill: $bg-page; // 与页面背景色一致，实现无缝融合
-    // }
+    // 使用变量调整遮罩
+    background: linear-gradient(to bottom, rgba($darkMainColor, 0.1), rgba($darkMainColor, 0.5));
   }
 }
 
-/* ================= 2. 核心内容卡片 ================= */
-.content-card, .sidebar-card, .booking-card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-  padding: 24px;
-  border: none;
-  
-  // 移动端减少内边距
-  @media (max-width: 768px) {
-    padding: 16px;
+.main-container {
+  position: relative;
+  z-index: 10;
+  margin-top: -20px;
+  @media (min-width: 992px) {
+    margin-top: 30px;
   }
 }
 
-.content-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: $mainColor;
-  margin-bottom: 0.2rem;
-  line-height: 1.3;
-  @media (max-width: 768px) {
-    font-size: 1.4rem;
-  }
-}
-
-/* ================= 3. 信息网格 (Info Grid) ================= */
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
-  background: #f8f9fa;
+// 通用卡片样式 - 使用变量定义的圆角和背景色
+.info-card, .rich-text-card, .project-card, .sidebar-card {
+  background: $bg-page;
+  border-radius: $borderRadius;
   padding: 20px;
-  border-radius: 12px;
-  margin-top: 20px;
+  // 如果需要更圆润的边框，可以使用 $textBorderRadius
+  // border-radius: $textBorderRadius; 
+}
 
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr; // 手机端单列显示
-    gap: 10px;
-    padding: 15px;
+// A. 核心信息卡片
+.info-card {
+  .price-row {
+    color: #ff4d4f; // 价格保留醒目红色
+    font-weight: bold;
+    .currency { font-size: 14px; }
+    .amount { font-size: 24px; line-height: 1; }
+    .suffix { font-size: 12px; color: $text-sub; margin-left: 2px; }
+  }
+  
+  .view-count {
+    color: $text-sub;
+  }
+  
+  .title-row {
+    .level-badge {
+      background: $theme-color; // 使用主色调
+      color: $whiteColor;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: $buttonBorderRadius;
+      font-weight: bold;
+    }
+    .scenery-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: $text-main;
+    }
   }
 
-  .info-box {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    
-    .icon-wrap {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
+  .scenery-desc {
+    font-size: $fontSizeBase;
+    line-height: 1.6;
+    margin-bottom: 15px;
+    color: $text-sub;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  // 营业时间与地址栏
+  .meta-box {
+    background: #f8fcfb; // 可以微调这个背景色以匹配新主题
+    border-radius: $borderRadius;
+    padding: 12px;
+    .meta-row {
       display: flex;
       align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      
-      .iconfont { font-size: 20px; }
-      
-      &.bg-green-light { background: rgba(102, 208, 86, 0.1); }
-      &.text-green { color: #66d056; }
-      
-      &.bg-yellow-light { background: rgba(249, 201, 40, 0.1); }
-      &.text-yellow { color: #f9c928; }
-      
-      &.bg-cyan-light { background: rgba(71, 197, 187, 0.1); }
-      &.text-cyan { color: #47c5bb; }
+      font-size: 14px;
+      padding: 4px 0;
+      .label { font-weight: bold; margin-right: 10px; width: 70px; color: $theme-color; }
+      .value { color: $text-main; flex: 1; }
+      &.cursor-pointer { cursor: pointer; }
+      // 图标颜色也使用主题色
+      .theme-color { color: $theme-color !important; }
     }
+    .divider { height: 1px; background: #eee; margin: 8px 0; }
+  }
+}
 
-    .text-wrap {
+// B. Tab 导航栏
+.tabs-header {
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  border-radius: $borderRadius $borderRadius 0 0;
+  border-bottom: 1px solid #eee;
+  
+  .tab-item {
+    position: relative;
+    padding: 10px;
+    font-size: 15px;
+    color: $text-sub;
+    cursor: pointer;
+    font-weight: 500;
+    
+    &.active {
+      color: $theme-color; // 选中项使用主色
+      font-weight: bold;
+      .indicator {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 24px;
+        height: 3px;
+        background: $theme-color;
+        border-radius: 2px;
+      }
+    }
+  }
+}
+
+// 【修改点2】 C. 景区项目列表 - 网格布局重构
+.projects-grid {
+  display: grid;
+  // 移动端一排1个
+  grid-template-columns: 1fr;
+  gap: 15px;
+  
+  // 平板端一排2个
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  // PC端一排3个
+  @media (min-width: 992px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  // 项目卡片样式重构为垂直布局
+  .project-card {
+    padding: 0; // 移除内边距，让图片撑满
+    overflow: hidden;
+    display: flex;
+    flex-direction: column; // 垂直排列
+    
+    .thumb-wrapper {
+      width: 100%;
+      height: 160px; // 固定高度确保整齐
+      border-radius: $borderRadius $borderRadius 0 0;
+      overflow: hidden;
+      img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+    }
+    
+    &:hover .thumb-wrapper img {
+      transform: scale(1.05);
+    }
+    
+    .card-info {
+      padding: 15px;
+      flex: 1;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
-      small { color: #999; font-size: 12px; white-space: nowrap; }
-      strong { color: $mainColor; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    }
-  }
-}
-
-/* ================= 4. 吸顶 Tabs ================= */
-.sticky-tabs-wrapper {
-  position: sticky;
-  top: 70px; // 根据顶部导航栏高度调整
-  z-index: 99;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(5px);
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-  margin-bottom: 20px;
-  padding: 6px;
-  
-  .custom-tabs {
-    .nav-link {
-      color: $primaryColor;
-      font-weight: 600;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
       
-      &.active {
-        background-color: rgba($primaryColor, 0.1);
-        color: $primaryColor;
+      .item-name { 
+        font-size: 16px; 
+        font-weight: bold; 
+        margin-bottom: 10px;
+        color: $text-main;
       }
       
-      &:hover:not(.active) {
-        background-color: #f8f9fa;
+      .bottom-action {
+        // mt-auto 确保操作栏始终在卡片底部
+        .price { font-size: 14px; .num { font-size: 20px; font-weight: bold; } }
+        .btn-book-sm {
+          background: $theme-color; 
+          color: $bg-page; border: none;
+          padding: 6px 18px; border-radius: $buttonBorderRadius;
+          font-size: 13px; font-weight: bold;
+          transition: opacity 0.3s;
+          &:hover { opacity: 0.9; }
+        }
       }
     }
   }
 }
 
-/* ================= 5. 详情正文样式 ================= */
-.detail-section {
-  padding: 10px 0;
-}
-
-.section-header {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  color: $mainColor;
-  
-  .line {
-    width: 4px;
-    height: 18px;
-    background: $primaryColor;
-    margin-right: 10px;
-    border-radius: 2px;
-  }
-}
-
-.section-divider {
-  margin: 30px 0;
-  border-color: #eee;
-  opacity: 0.5;
-}
-
-.rich-text {
-  font-size: 15px;
-  color: #555;
+// 富文本内容
+.rich-text-card {
+  font-size: $fontSizeBase;
+  color: $text-main;
   line-height: 1.8;
-  
-  // 防止富文本图片撑破容器
-  :deep(img) {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-  }
+  :deep(img) { max-width: 100%; border-radius: $borderRadius; }
 }
 
-/* ================= 6. 右侧侧边栏组件 ================= */
-.booking-card {
-  border: 2px solid $primaryColor; // 强调边框
-  
-  .price-area {
-    margin-bottom: 20px;
-    color: #ff4d4f;
-    .currency { font-size: 18px; vertical-align: top; margin-right: 2px; }
-    .amount { font-size: 36px; font-weight: 800; line-height: 1; }
-    .unit { color: #999; font-size: 14px; margin-left: 5px; }
-  }
-}
-
-// 侧边栏吸顶
-.sidebar-sticky {
-  position: sticky;
-  top: 90px;
-  z-index: 90;
-}
-
-.card-header-custom {
-  padding-bottom: 15px;
-  border-bottom: 1px solid #eee;
-  margin-bottom: 10px;
-  h5 { 
-    margin: 0; 
-    font-weight: 700; 
-    border-left: 4px solid $primaryColor; 
+// PC端侧边栏
+.sidebar-card {
+  .card-title { 
+    font-weight: bold; 
+    border-left: 4px solid $theme-color; 
     padding-left: 10px; 
-    font-size: 16px;
+    color: $text-main;
   }
 }
-
-.thumb-wrapper {
-  width: 80px;
-  height: 60px;
-  flex-shrink: 0;
-  overflow: hidden;
-  border-radius: 6px;
+.sticky-action { position: sticky; top: 90px; z-index: 90; }
+// 通用按钮样式，使用主色调和变量圆角
+.btn-theme { 
+  background-color: $theme-color; 
+  border-color: $theme-color; 
+  color: $bg-page;
+  border-radius: $buttonBorderRadius;
+  &:hover { opacity: 0.9; background-color: $theme-color; color: $bg-page;} 
 }
 
-.recommend-thumb {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s;
-}
-
-.list-group-item:hover .recommend-thumb {
-  transform: scale(1.1);
-}
-
-.text-truncate-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  font-size: 14px;
-  line-height: 1.4;
-  color: $mainColor;
-}
-
-/* ================= 7. 移动端底部栏 ================= */
+// 移动端底部固定栏
 .mobile-bottom-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: white;
-  padding: 10px 20px;
-  display: flex;
-  align-items: center;
+  position: fixed; bottom: 0; left: 0; width: 100%;
+  background: $bg-page; padding: 10px 20px;
+  display: flex; align-items: center;
   box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
   z-index: 1000;
-  // 适配 iPhone 底部安全区
   padding-bottom: calc(10px + env(safe-area-inset-bottom));
 
   .icons {
-    display: flex;
-    gap: 24px;
-    margin-right: 16px;
-    
+    display: flex; gap: 20px; margin-right: 16px;
     .icon-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      font-size: 10px;
-      color: $primaryColor;
-      text-decoration: none;
-      cursor: pointer;
-      
-      .iconfont { 
-        font-size: 22px; 
-        margin-bottom: 2px; 
-        color: $mainColor;
-      }
+      display: flex; flex-direction: column; align-items: center;
+      font-size: 10px; color: $text-sub; cursor: pointer;
+      .iconfont { font-size: 22px; margin-bottom: 2px; color: $text-main; }
     }
   }
 }
