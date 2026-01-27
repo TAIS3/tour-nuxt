@@ -367,6 +367,14 @@ useHead({
     { name: 'description', content: computed(() => scenery.value.introduce || '') }
   ]
 })
+
+useHead({
+  title: computed(() => stripHtml(scenery.value.langData?.seo_title) || 'Scenery List'),
+  meta: [
+    { name: 'keywords', content: computed(() => stripHtml(scenery.value.langData?.seo_keywords) || 'Best Tours') },
+    { name: 'description', content: computed(() => stripHtml(scenery.value.langData?.seo_description) || '') }
+  ]
+})
 </script>
 
 <style lang="scss" scoped>
