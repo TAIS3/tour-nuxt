@@ -86,7 +86,11 @@ const currentCategory = computed(() => {
     settype: data.settype,
     image: data.bannerimage,
     title: data.langData?.bannertitle || '',
+    subtitle: data.langData?.bannersubtitle || '',
     content: data.langData?.bannercontent || '',
+    seo_title: data.langData?.seo_title || '',
+    seo_keywords: data.langData?.seo_keywords || '',
+    seo_description: data.langData?.seo_description || '',
   }
 })
 
