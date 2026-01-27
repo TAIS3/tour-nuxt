@@ -73,7 +73,7 @@
                               class="menu-title clickable d-block mb-2 mb-lg-3" 
                               :to="resolvePath(cat, 'scenery')"
                             >
-                              {{ cat.name }}
+                              {{ cat.name }} >>
                             </NuxtLink>
                             <ul class="list-unstyled">
                               <li v-for="child in cat.children" :key="child.id" class="mb-2">
@@ -81,7 +81,7 @@
                                   class="menu-link" 
                                   :to="resolvePath(child, 'scenery')"
                                 >
-                                  {{ child.name }}
+                                  {{ child.name }} >>
                                 </NuxtLink>
                               </li>
                             </ul>
@@ -140,7 +140,7 @@
                               class="menu-title clickable d-block mb-2 mb-lg-3" 
                               :to="resolvePath(cat, 'tour')"
                             >
-                              {{ cat.name }}
+                              {{ cat.name }} >>
                             </NuxtLink>
                             <ul class="list-unstyled">
                               <li v-for="child in cat.children" :key="child.id" class="mb-2">
@@ -148,7 +148,7 @@
                                   class="menu-link" 
                                   :to="resolvePath(child, 'tour')"
                                 >
-                                  {{ child.name }}
+                                  {{ child.name }} >>
                                 </NuxtLink>
                               </li>
                             </ul>
@@ -309,11 +309,13 @@ const currentLangLabel = computed(() => {
 
 const resolvePath = (item, type = 'tour') => {
   let path = "";
-  if (item.route && item.route !== '#') {
+  
+  if (item.route && item.route !== '#' && item.route !== 'tourlist') {
     path = item.route.startsWith("/") ? item.route : "/" + item.route;
   } else {
     path = type === 'scenery' ? `/scenerylist/${item.id}` : `/tourlist/${item.id}`;
   }
+  
   return localePath(path);
 };
 
@@ -374,21 +376,27 @@ $hover-gold: #F2CC8F;  // 金色高亮
   position: fixed;
   width: 100%;
   height: auto;
-  .dropdown-toggle{
-    &:not(.lang-btn)::before {
-      content: "\f282";
-      display: inline-block;
-      font-family: bootstrap-icons;
-      position: absolute;
-      right: -5px;
-      border: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      transition: transform 0.3s;
+  .nav-item{
+    .dropdown-toggle{
+      &:not(.lang-btn)::before {
+        content: "\f282";
+        display: inline-block;
+        font-family: bootstrap-icons;
+        position: absolute;
+        right: -5px;
+        border: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        transition: transform 0.3s;
+      }
     }
-    &:hover::before {
-      transform: translateY(-50%) rotate(180deg);
-      transition: transform 0.3s;
+    &:hover{
+      .dropdown-toggle{
+        &::before {
+          transform: translateY(-50%) rotate(180deg);
+          transition: transform 0.3s;
+        }
+      }
     }
   }
 }
@@ -411,7 +419,15 @@ $hover-gold: #F2CC8F;  // 金色高亮
   // 【新增】给 nav-item 增加底部透明填充，防止鼠标滑向菜单时断开
   .nav-item {
     padding-bottom: 20px; 
-    margin-bottom: -20px; 
+    margin-bottom: -20px;
+    &:hover{
+      .nav-link{
+        color: $hover-gold;
+        &::after {
+          width: 80%; 
+        }
+      }
+    }
   }
   .nav-link {
     color: rgba(255, 255, 255, 0.9);
@@ -439,9 +455,9 @@ $hover-gold: #F2CC8F;  // 金色高亮
       border: 0;
     }
     // 鼠标移上去时，宽度变大
-    &:hover::after {
-      width: 80%; 
-    }
+    // &:hover::after {
+    //   width: 80%; 
+    // }
   }
 }
 
@@ -487,9 +503,11 @@ $hover-gold: #F2CC8F;  // 金色高亮
     border-bottom: 1px solid rgba(255,255,255,0.1);
     padding-bottom: 5px;
     margin-bottom: 10px;
-    
-    &:hover {
-      color: $hover-gold;
+    &.clickable{
+      cursor: pointer;
+      &:hover {
+        color: $hover-gold;
+      }
     }
   }
 

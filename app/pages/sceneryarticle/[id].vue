@@ -163,16 +163,16 @@
             <div class="recommend-list">
               <div class="recommend-item d-flex gap-3 mb-3 pb-3 border-bottom" v-for="(item, index) in recommendList" :key="index">
                 <NuxtLink :to="localePath(`/sceneryarticle/${item.id}`)" class="flex-shrink-0">
-                  <img :src="item.thumb_image" :alt="item.name" class="recommend-img rounded" />
+                  <img :src="item.thumb_image_text" :alt="item.name" class="recommend-img rounded" />
                 </NuxtLink>
                 <div class="recommend-text flex-grow-1 overflow-hidden">
-                  <h6 class="mb-1 text-truncate">
+                  <h6 class="mb-0 text-truncate">
                     <NuxtLink :to="localePath(`/sceneryarticle/${item.id}`)" class="text-dark text-decoration-none">
                       {{ item.name }}
                     </NuxtLink>
                   </h6>
-                  <p class="mb-0 text-danger fw-bold">
-                    {{ t('sceneryArticle.price') }} ¥{{ parseFloat(item.salesprice) }}
+                  <p class="mb-0 intro-text">
+                    {{ item.introduce }}
                   </p>
                 </div>
               </div>
@@ -411,6 +411,20 @@ $bg-page: #f5f7fa;
   background: $bg-page;
   border-radius: $borderRadius;
   padding: 20px;
+  .text-truncate{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .intro-text{
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical
+  }
 }
 .rich-text-card{
   background: $bg-page;
@@ -594,6 +608,7 @@ $bg-page: #f5f7fa;
 // PC端侧边栏
 .sidebar-card {
   .card-title { 
+    font-size: 18px;
     font-weight: bold; 
     border-left: 4px solid $theme-color; 
     padding-left: 10px; 

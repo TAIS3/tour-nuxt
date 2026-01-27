@@ -64,7 +64,7 @@ const { data: categoryRaw } = await useAsyncData(
 // immediate: true 保证了 SSR 首屏渲染时也会执行这个检查
 watch(categoryRaw, (newVal) => {
   // 打印日志方便调试，看看数据到底是不是 code: 404
-  console.log('API Result:', newVal) 
+  // console.log('API Result:', newVal) 
 
   if (newVal?.code === 404) {
     showError({
