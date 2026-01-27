@@ -5,7 +5,7 @@
         class="tour-card bg-white rounded-2 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 h-100"
       >
         <div class="tour-image h-40 sm:h-48 overflow-hidden">
-          <NuxtLink :to="localePath(`/tourarticle/${product.id}`)" class="img-wrap d-block">
+          <NuxtLink :to="localePath(`/${articleType}/${product.id}`)" class="img-wrap d-block">
             <img
               :src="getImageUrl(product.images)"
               :alt="product.lang_name"
@@ -15,21 +15,21 @@
         </div>
 
         <div class="p-3 sm:p-4">
-          <NuxtLink :to="localePath(`/tourarticle/${product.id}`)" class="text-decoration-none">
+          <NuxtLink :to="localePath(`/${articleType}/${product.id}`)" class="text-decoration-none">
             <h3 class="h6 sm:h5 font-semibold text-gray-800 mb-2 line-clamp-1 title hover:text-theme">
               {{ product.lang_name }}
             </h3>
           </NuxtLink>
           
-          <p class="text-gray-600 text-xs sm:text-sm mb-3 line-clamp-2 sub_title">
-            {{ product.lang_sub_name }}
+          <p class="text-gray-600 text-xs sm:text-sm line-clamp-2 sub_title">
+            {{ product.lang_sub_name || product.lang_introduce }}
           </p>
 
-          <div class="d-flex justify-between justify-content-between align-items-center">
+          <div v-if="articleType === 'tourarticle'" class="d-flex justify-between justify-content-between align-items-center control-bottom pt-3">
             <button class="btn btn-xs btn-sm theme-btn">Add to Cart</button>
             
             <NuxtLink
-              :to="localePath(`/tourarticle/${product.id}`)"
+              :to="localePath(`/${articleType}/${product.id}`)"
               class="text-theme fw-medium d-flex items-center gap-1 text-sm text-decoration-none"
             >
               VIEW
@@ -52,10 +52,14 @@ const props = defineProps({
     required: true,
     default: () => [],
   },
+  articleType: {
+    type: String,
+    required: false,
+    default: 'tourarticle',
+  }
 })
 
-// ✅ 核心修改：获取 localePath 工具
-// 这个工具会自动处理 '/tourarticle/123' -> '/en/tourarticle/123' (取决于当前语言)
+
 const localePath = useLocalePath()
 
 // ❌ 移除了 goDetail 函数
@@ -81,14 +85,17 @@ p.sub_title {
   height: 3rem;
   overflow: hidden;
   text-overflow: ellipsis;
-  border-bottom: 1px solid;
-  border-color: $mainColor;
+  
   font-size: clamp(12px, 1vw, 16px);
 }
 
 .tour-card {
   display: flex;
   flex-direction: column;
+}
+.control-bottom{
+  border-top: 1px solid;
+  border-color: $mainColor;
 }
 
 .tour-image {

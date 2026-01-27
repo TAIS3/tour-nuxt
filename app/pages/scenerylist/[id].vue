@@ -15,7 +15,7 @@
     </section>
     <div class="container my-4 sm:my-8 px-2">
       <template v-if="currentProducts && currentProducts.length">
-        <CommonList :products="currentProducts" />
+        <CommonList :products="currentProducts" article-type="sceneryarticle" />
 
         <Pagination
           v-if="totalPages > 1"

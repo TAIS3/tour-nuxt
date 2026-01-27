@@ -1,20 +1,18 @@
 <template>
   <div class="sticky-top-custom sticky-wrapper">
-    <nav class="navbar navbar-expand-lg">
-      <div class="container">
-        <NuxtLink
-          class="navbar-brand d-flex align-items-center"
-          :to="localePath('/')"
-        >
+    <nav class="navbar navbar-expand-lg navbar-dark bg-theme-dark">
+      <div class="container position-relative">
+        
+        <NuxtLink class="navbar-brand d-flex align-items-center" :to="localePath('/')">
           <img
             src="~/assets/images/logo.png"
-            class="navbar-brand-image img-fluid"
+            class="navbar-brand-image img-fluid filter-white"
             alt="EZTRIPCN"
           />
         </NuxtLink>
 
         <button
-          class="navbar-toggler"
+          class="navbar-toggler border-0 focus-none"
           type="button"
           data-bs-toggle="collapse"
           data-bs-target="#navbarNav"
@@ -22,45 +20,146 @@
           <span class="navbar-toggler-icon"></span>
         </button>
 
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto">
-            <li>
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+          <ul class="navbar-nav align-items-lg-center">
+            
+            <li class="nav-item">
               <NuxtLink class="nav-link" :to="localePath('/')">
                 {{ t("commonConfig.home") }}
               </NuxtLink>
             </li>
 
-            <li
-              v-for="cat in categoryList"
-              :key="cat.id"
-              class="nav-item"
-              :class="{ dropdown: cat.children && cat.children.length > 0 }"
-            >
-              <NuxtLink
-                v-if="!cat.children || cat.children.length === 0"
-                class="nav-link"
-                :to="resolvePath(cat)"
+            <li class="nav-item dropdown position-static">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown"
+                @click.prevent="isMobile && toggleDropdown($event)"
               >
-                {{ cat.name }}
-              </NuxtLink>
+                {{ t("commonConfig.scenery") || 'Scenery' }}
+              </a>
+              
+              <div class="dropdown-menu mega-menu w-100 p-0 border-0">
+                <div class="mega-menu-inner d-flex">
+                  
+                  <div class="mega-left d-none d-lg-flex justify-content-center align-items-center">
+                    <div class="placeholder-icon text-center">
+                      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-white-50">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                      </svg>
+                      <div class="mt-3 text-white-50 fw-bold tracking-wider">SCENERY</div>
+                    </div>
+                  </div>
 
-              <template v-else>
-                <a
-                  class="nav-link dropdown-toggle"
-                  href="#"
-                  role="button"
-                  data-bs-toggle="dropdown"
-                >
-                  {{ cat.name }}
-                </a>
-                <ul class="dropdown-menu dropdown-menu-light">
-                  <li v-for="child in cat.children" :key="child.id">
-                    <NuxtLink class="dropdown-item" :to="resolvePath(child)">
-                      {{ child.name }}
-                    </NuxtLink>
-                  </li>
-                </ul>
-              </template>
+                  <div class="mega-right flex-grow-1 p-4 p-lg-5">
+                    <div class="container-fluid">
+                      <div class="row">
+                        <div 
+                          class="col-lg-3 col-md-6 mb-4" 
+                          v-for="cat in sceneryCategoryList" 
+                          :key="cat.id"
+                        >
+                          <div class="menu-column">
+                            <span 
+                              v-if="cat.children && cat.children.length > 0"
+                              class="menu-title non-clickable d-block mb-2 mb-lg-3"
+                            >
+                              {{ cat.name }}
+                            </span>
+                            <NuxtLink 
+                              v-else
+                              class="menu-title clickable d-block mb-2 mb-lg-3" 
+                              :to="resolvePath(cat, 'scenery')"
+                            >
+                              {{ cat.name }}
+                            </NuxtLink>
+                            <ul class="list-unstyled">
+                              <li v-for="child in cat.children" :key="child.id" class="mb-2">
+                                <NuxtLink 
+                                  class="menu-link" 
+                                  :to="resolvePath(child, 'scenery')"
+                                >
+                                  {{ child.name }}
+                                </NuxtLink>
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </li>
+
+            <li class="nav-item dropdown position-static">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown"
+                @click.prevent="isMobile && toggleDropdown($event)"
+              >
+                {{ t("commonConfig.tour") || 'Tour' }}
+              </a>
+              
+              <div class="dropdown-menu mega-menu w-100 p-0 border-0">
+                <div class="mega-menu-inner d-flex">
+                  
+                  <div class="mega-left d-none d-lg-flex justify-content-center align-items-center">
+                    <div class="placeholder-icon text-center">
+                      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-white-50">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                      </svg>
+                      <div class="mt-3 text-white-50 fw-bold tracking-wider">TOURS</div>
+                    </div>
+                  </div>
+
+                  <div class="mega-right flex-grow-1 p-4 p-lg-5">
+                    <div class="container-fluid">
+                      <div class="row">
+                        <div 
+                          class="col-lg-3 col-md-6 mb-4" 
+                          v-for="cat in tourCategoryList" 
+                          :key="cat.id"
+                        >
+                          <div class="menu-column">
+                            <span 
+                              v-if="cat.children && cat.children.length > 0"
+                              class="menu-title non-clickable d-block mb-2 mb-lg-3"
+                            >
+                              {{ cat.name }}
+                            </span>
+                            <NuxtLink 
+                              v-else
+                              class="menu-title clickable d-block mb-2 mb-lg-3" 
+                              :to="resolvePath(cat, 'tour')"
+                            >
+                              {{ cat.name }}
+                            </NuxtLink>
+                            <ul class="list-unstyled">
+                              <li v-for="child in cat.children" :key="child.id" class="mb-2">
+                                <NuxtLink 
+                                  class="menu-link" 
+                                  :to="resolvePath(child, 'tour')"
+                                >
+                                  {{ child.name }}
+                                </NuxtLink>
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
             </li>
 
             <li class="nav-item dropdown">
@@ -72,12 +171,11 @@
               >
                 {{ t("commonConfig.aboutus") }}
               </a>
-              <ul class="dropdown-menu dropdown-menu-light">
+              <ul class="dropdown-menu simple-menu border-0 shadow-lg p-2">
                 <template v-if="singlePageList && singlePageList.length">
                   <li v-for="child in singlePageList" :key="child.id">
                     <NuxtLink
-                      v-if="child.id"
-                      class="dropdown-item"
+                      class="dropdown-item rounded"
                       :to="localePath(`/singlepage/${child.id}`)"
                     >
                       {{ child.title }}
@@ -87,19 +185,19 @@
               </ul>
             </li>
 
-            <li class="nav-item dropdown ms-3">
+            <li class="nav-item dropdown ms-lg-3">
               <a
-                class="nav-link dropdown-toggle"
+                class="nav-link dropdown-toggle lang-btn d-inline-flex align-items-center"
                 href="#"
                 role="button"
                 data-bs-toggle="dropdown"
               >
-                🌐 {{ currentLangLabel }}
+                <i class="iconfont icon-global me-2">🌐</i> {{ currentLangLabel }}
               </a>
-              <ul class="dropdown-menu">
+              <ul class="dropdown-menu dropdown-menu-end simple-menu border-0 shadow-lg p-2">
                 <li v-for="lang in supportedLangs" :key="lang.code || lang">
                   <a
-                    class="dropdown-item cursor-pointer"
+                    class="dropdown-item rounded"
                     href="javascript:void(0)"
                     :class="{ active: locale === (lang.code || lang) }"
                     @click="handleLangSwitch(lang.code || lang)"
@@ -109,6 +207,7 @@
                 </li>
               </ul>
             </li>
+
           </ul>
         </div>
       </div>
@@ -140,9 +239,10 @@
 </template>
 
 <script setup>
-// 1. 引入
+// 1. 引入依赖
 const {
   getTourCategories,
+  getSceneryCategories,
   getSinglePageNav,
   getSupportedLangs,
   getLanguageJson,
@@ -153,48 +253,46 @@ const localePath = useLocalePath();
 const switchLocalePath = useSwitchLocalePath();
 const loadingIndicator = useLoadingIndicator();
 
-// 2. 数据获取 (SSR + 响应式重刷)
-// ✅ 使用 useAsyncData 包裹，确保语言切换时菜单也能跟着变 (如 Category 名称变中文)
+const isMobile = ref(false)
+onMounted(() => {
+  const checkMobile = () => isMobile.value = window.innerWidth < 992
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+// 2. 数据获取
 const { data: navData } = await useAsyncData(
-  // Key 加上 locale.value，确保缓存隔离
   () => `navbar-data-${locale.value}`,
-  
   async () => {
-    // 并行请求：分类、单页菜单、支持语言
-    // ✅ 不需要传 lang 参数！useHttp 会自动注入当前 locale.value
-    const [categoriesRes, singlePageRes, langRes] = await Promise.all([
+
+    const [tourRes, sceneryRes, singlePageRes, langRes] = await Promise.all([
       getTourCategories(),
+      getSceneryCategories(), 
       getSinglePageNav(),
       getSupportedLangs(),
     ]);
 
-    // 解包 .value (因为 getXXX 返回的是 useFetch 的响应引用)
     return {
-      categories: categoriesRes.data.value,
+      tourCats: tourRes.data.value,
+      sceneryCats: sceneryRes?.data?.value || [],
       singlePages: singlePageRes.data.value,
       langs: langRes.data.value
     };
   },
-  {
-    // ✅ 核心：监听 locale，语言变了立刻重发请求
-    watch: [locale]
-  }
+  { watch: [locale] }
 );
 
-// 3. 数据处理 (Computed)
-const categoryList = computed(() => navData.value?.categories?.data || []);
+// 3. 数据处理
+const tourCategoryList = computed(() => navData.value?.tourCats?.data || []);
+const sceneryCategoryList = computed(() => navData.value?.sceneryCats?.data || []);
 const singlePageList = computed(() => navData.value?.singlePages?.data || []);
 
 const supportedLangs = computed(() => {
-  // 优先用接口数据
   const apiLangs = navData.value?.langs?.data || langStore.supportedLangs || ["en"];
-  
   return apiLangs.map((lang) => {
-    // 字符串兼容处理
     if (typeof lang === "string") {
       return { code: lang === "zh-cn" ? "zh_CN" : lang, name: lang };
     }
-    // 对象处理 & 纠正 zh-cn 为 zh_CN
     const code = lang.code || lang.name || "";
     if (code.toLowerCase() === "zh-cn") {
       return { ...lang, code: "zh_CN" };
@@ -209,47 +307,33 @@ const currentLangLabel = computed(() => {
   return (current?.name || current?.code || locale.value).toUpperCase();
 });
 
-// 路径解析
-const resolvePath = (item) => {
+const resolvePath = (item, type = 'tour') => {
   let path = "";
-  if (item.route === "tourlist") {
-    path = `/tourlist/${item.id}`;
+  if (item.route && item.route !== '#') {
+    path = item.route.startsWith("/") ? item.route : "/" + item.route;
   } else {
-    path = item.route
-      ? item.route.startsWith("/")
-        ? item.route
-        : "/" + item.route
-      : "/";
+    path = type === 'scenery' ? `/scenerylist/${item.id}` : `/tourlist/${item.id}`;
   }
   return localePath(path);
 };
 
-// ✅ 语言切换逻辑 (保持不变)
+const toggleDropdown = (event) => {
+  // Mobile Only
+};
+
 const handleLangSwitch = async (targetLang) => {
   if (targetLang === locale.value) return;
-
   try {
     const existingMessages = getLocaleMessage(targetLang);
-    const hasData = existingMessages && Object.keys(existingMessages).length > 0;
-
-    if (!hasData) {
+    if (!existingMessages || Object.keys(existingMessages).length === 0) {
       loadingIndicator.start();
-      console.log(`切换语言: 正在拉取 ${targetLang} 数据...`);
-
-      // ✅ 这里必须显式传参！
-      // 因为我们要拉取的是 targetLang (未来语言)，而不是 useHttp 默认注入的 currentLang
       const { data: res } = await getLanguageJson(targetLang);
-
-      if (res.value && res.value.data) {
-        setLocaleMessage(targetLang, res.value.data);
-      }
+      if (res.value && res.value.data) setLocaleMessage(targetLang, res.value.data);
     }
-
     loadingIndicator.finish();
     const targetPath = switchLocalePath(targetLang);
     await navigateTo(targetPath);
   } catch (error) {
-    console.error("切换语言失败:", error);
     loadingIndicator.finish();
     const targetPath = switchLocalePath(targetLang);
     await navigateTo(targetPath);
@@ -258,6 +342,14 @@ const handleLangSwitch = async (targetLang) => {
 </script>
 
 <style lang="scss" scoped>
+// ====== 1. 主题变量 ======
+$theme-color: $mainColor; // 深蓝背景
+$mega-bg: $mainColor;     // 下拉菜单也用深蓝
+$mega-left-bg: $mainColor; // 左侧装饰区稍微加深
+$text-light: #ffffff;
+$hover-gold: #F2CC8F;  // 金色高亮
+
+// ====== 2. 导航栏布局 ======
 .sticky-top-custom {
   position: -webkit-relative;
   position: relative;
@@ -282,13 +374,312 @@ const handleLangSwitch = async (targetLang) => {
   position: fixed;
   width: 100%;
   height: auto;
+  .dropdown-toggle{
+    &:not(.lang-btn)::before {
+      content: "\f282";
+      display: inline-block;
+      font-family: bootstrap-icons;
+      position: absolute;
+      right: -5px;
+      border: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      transition: transform 0.3s;
+    }
+    &:hover::before {
+      transform: translateY(-50%) rotate(180deg);
+      transition: transform 0.3s;
+    }
+  }
 }
 
+.bg-theme-dark {
+  background-color: $theme-color !important;
+  padding: 1rem 0;
+}
+
+// Logo 反白
 .navbar-brand-image {
-  max-height: 40px;
+  height: 20px;
+  &.filter-white {
+    filter: brightness(0) invert(1);
+  }
 }
 
-.cursor-pointer {
-  cursor: pointer;
+// 导航链接样式
+.navbar-dark .navbar-nav {
+  // 【新增】给 nav-item 增加底部透明填充，防止鼠标滑向菜单时断开
+  .nav-item {
+    padding-bottom: 20px; 
+    margin-bottom: -20px; 
+  }
+  .nav-link {
+    color: rgba(255, 255, 255, 0.9);
+    position: relative;
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 15px;
+    padding: 0.5rem 1rem;
+    transition: color 0.3s;
+
+    &:hover, &.show {
+      color: $hover-gold;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 5px; // 根据需要调整距离文字的位置
+      left: 50%;
+      width: 0; // 初始宽度为0
+      height: 2px;
+      background-color: $hover-gold; // 使用你的金色变量 #F2CC8F
+      transition: all 0.3s ease-in-out;
+      transform: translateX(-50%); // 居中
+      border: 0;
+    }
+    // 鼠标移上去时，宽度变大
+    &:hover::after {
+      width: 80%; 
+    }
+  }
+}
+
+// ====== 3. Mega Menu (关键修复) ======
+.mega-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%; // 占满整个导航栏宽度
+  background-color: $mega-bg; // 背景深蓝
+  border-radius: 0 0 8px 8px;
+  margin-top: 0;
+  overflow: hidden; // 防止圆角溢出
+  
+  // 内部容器 flex 布局
+  .mega-menu-inner {
+    min-height: 300px;
+  }
+
+  // 左侧装饰区 (25%)
+  .mega-left {
+    width: 25%;
+    // background-color: $mega-left-bg; // 深色背景块
+    border-right: 1px solid rgba(255,255,255,0.05);
+    
+    .tracking-wider {
+      letter-spacing: 2px;
+    }
+  }
+
+  // 右侧内容区 (75%)
+  .mega-right {
+    width: 75%;
+  }
+
+  // 标题样式
+  .menu-title {
+    color: $text-light;
+    font-weight: 700;
+    font-size: 16px;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+    
+    &:hover {
+      color: $hover-gold;
+    }
+  }
+
+  // 链接样式
+  .menu-link {
+    color: rgba(255,255,255,0.6);
+    font-size: 14px;
+    text-decoration: none;
+    transition: all 0.2s;
+    
+    &:hover {
+      color: $hover-gold;
+      padding-left: 5px;
+    }
+  }
+}
+
+// 普通下拉菜单
+.simple-menu {
+  background-color: $darkMainColor;
+  border-radius: 8px;
+  margin-top: 10px;
+  
+  .dropdown-item {
+    color: rgba(255,255,255,0.8);
+    font-size: 14px;
+    padding: 8px 16px;
+    
+    &:hover {
+      background-color: rgba(255,255,255,0.1);
+      color: $hover-gold;
+    }
+  }
+}
+
+// 语言按钮
+.lang-btn {
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 50px;
+  padding: 5px 15px !important;
+  font-size: 13px !important;
+  margin-top: -2px; // 微调对齐
+  
+  &:hover {
+    border-color: #fff;
+    background: rgba(255,255,255,0.1);
+  }
+  &::after { display: none; }
+}
+
+// ====== 4. 波浪 SVG ======
+.svg-wave-divider {
+  line-height: 0;
+  width: 100%;
+  background-color: transparent; // 关键：背景透明
+  position: relative;
+  z-index: 10;
+  margin-top: -1px; // 消除缝隙
+  
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    // 确保 SVG 顶部的颜色和导航栏背景色完全一致
+    path:first-child {
+      fill: $theme-color;
+    }
+  }
+}
+
+// ====== 5. 交互动画 (PC) ======
+@media (min-width: 992px) {
+  // 悬停展开
+  .navbar-nav .dropdown {
+    
+    // 【修改】悬停触发下拉 + 动画
+    &:hover > .dropdown-menu {
+      display: block;
+      animation: slideDown 0.2s ease forwards;
+    }
+    .dropdown-menu{
+      display: block;
+      animation: slideUp 0.1s ease forwards;
+    }
+  }
+  
+  .container.position-relative {
+    position: static !important;
+  }
+
+}
+
+// 【新增】定义动画关键帧
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px); // 从上方 20px 处下落
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 1;
+    transform: translateY(0); // 从上方 20px 处下落
+    pointer-events: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+    display: none;
+    pointer-events: none;
+  }
+}
+
+// ====== 6. 移动端适配 ======
+@media (max-width: 991px) {
+  .navbar-collapse {
+    // 这里的颜色改为你的深色主题变量
+    background-color: $theme-color; 
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    padding: 0;
+    max-height: 85vh;
+    overflow-y: auto;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .navbar-nav {
+    padding: 20px;
+  }
+
+  // 移动端不需要 Hover 桥梁，也不需要下划线
+  .nav-item {
+    margin-bottom: 0;
+    padding-bottom: 0 !important;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .nav-link {
+    padding: 15px 0 !important;
+    font-size: 16px;
+    color: #fff !important;
+    &::after { display: none; } // 禁用下划线动画
+  }
+
+  // 【核心】强制重置下拉菜单样式：去阴影、去定位、去背景
+  .mega-menu, .simple-menu {
+    position: static; 
+    float: none;
+    width: auto;
+    margin-top: 0;
+    background-color: transparent !important;
+    border: 0;
+    box-shadow: none !important;
+    padding-left: 15px; // 稍微缩进表示层级
+    padding-bottom: 10px;
+  }
+
+  // 确保左侧装饰图不占位 (虽然 template 加了 d-none，这里双保险)
+  .mega-left {
+    display: none !important;
+  }
+
+  .mega-right {
+    padding: 0 !important;
+  }
+
+  // 调整子菜单文字颜色
+  .menu-title {
+    color: rgba(255,255,255,0.5) !important; // 标题变暗
+    border-bottom: none;
+    margin-top: 10px;
+    margin-bottom: 5px;
+  }
+
+  .menu-link, .dropdown-item {
+    color: #fff !important; // 链接亮白
+    padding: 8px 0;
+  }
+}
+
+.focus-none {
+  box-shadow: none !important;
+  outline: none !important;
 }
 </style>

@@ -102,7 +102,7 @@ export const useApi = () => {
 
     // 13.获取景点分类
     getSceneryCategories: () => {
-      return useHttp('/api/xilutour.scenery/scenery_category', {
+      return useHttp('/api/xilutour.common/scenery_category', {
         method: 'POST'
       })
     },
@@ -113,6 +113,14 @@ export const useApi = () => {
         method: 'POST',
         body: payload
       })
-    }
+    },
+
+    // 15. 推荐景点
+    getSceneryRecommend: (payload) => {
+      return useHttp('/api/xilutour.scenery/hot_list', {
+        method: 'POST',
+        body: payload
+      })
+    },
   }
 }

@@ -1,7 +1,7 @@
 <template>
   <div>
     <section
-      class="hero-section section-bg-image"
+      class="hero-section section-bg-image article-banner"
       id="section_top"
       :style="bannerStyle"
     >
@@ -190,26 +190,6 @@ useHead({
 <style lang="scss" scoped>
 // 你的全局样式引入 (如果 nuxt.config 已配置 css 则不需要这里引入)
 // @use '@/assets/css/global.scss' as *;
-
-.section-bg-image {
-  background-size: cover;
-  background-position: center;
-  position: relative;
-  .container {
-    margin: 0 auto;
-    padding: 0;
-    height: 100%;
-    .row {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      h1 {
-        font-size: clamp(18px, 6.5vw, 70px);
-        font-family: 'AznauriSquareBold', 'Microsoft YaHei', Arial, sans-serif;
-      }
-    }
-  }
-}
 
 .tour-card {
   background-color: #fff;
