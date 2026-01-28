@@ -79,6 +79,14 @@
             </div>
             <div 
               class="tab-item" 
+              :class="{ active: currentTab === 'needtoknow' }" 
+              @click="currentTab = 'needtoknow'"
+            >
+              {{ t('sceneryArticle.needtoknow') }}
+              <div class="indicator"></div>
+            </div>
+            <div 
+              class="tab-item" 
               :class="{ active: currentTab === 'mustread' }" 
               @click="currentTab = 'mustread'"
             >
@@ -107,9 +115,10 @@
             </div>
 
             <div v-show="currentTab !== 'projects'" class="rich-text-card bg-white rounded">
-              <div v-show="currentTab === 'detail'" v-html="scenery.content || t('commonConfig.noData')"></div>
-              <div v-show="currentTab === 'cost'" v-html="scenery.statement || t('commonConfig.noData')"></div>
-              <div v-show="currentTab === 'mustread'" v-html="scenery.travel_know || t('commonConfig.noData')"></div>
+              <div v-show="currentTab === 'detail'" v-html="safeContent(scenery.langData.content) || t('commonConfig.noData')"></div>
+              <div v-show="currentTab === 'cost'" v-html="safeContent(scenery.langData.statement) || t('commonConfig.noData')"></div>
+              <div v-show="currentTab === 'needtoknow'" v-html="safeContent(scenery.langData.need_know_content) || t('commonConfig.noData')"></div>
+              <div v-show="currentTab === 'mustread'" v-html="safeContent(scenery.langData.travel_know) || t('commonConfig.noData')"></div>
             </div>
           </div>
         </div>
