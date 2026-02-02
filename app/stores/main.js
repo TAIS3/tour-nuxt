@@ -2,39 +2,74 @@
 import { defineStore } from 'pinia'
 
 export const useMainStore = defineStore('main', () => {
+    // Existing state
     const categories = ref([])
-    const articles = ref([]) // 这里的 articles 对应你的 旅游列表
+    const articles = ref([])
     const articleDetail = ref(null)
 
-    // 获取分类列表
+    // Auth state
+    const token = useCookie('fa-token')
+    const user = ref(null)
+
+    const isLoggedIn = computed(() => !!user.value)
+
+    // Actions
+    function setToken(newToken) {
+      token.value = newToken
+    }
+
+    async function fetchUser() {
+      const { getUserInfo } = useApi()
+      if (token.value) {
+        const { data, error } = await getUserInfo()
+        if (error.value) {
+          console.error('Failed to fetch user:', error.value)
+          // Potentially clear token if it's invalid
+          clearAuth()
+        } else {
+          user.value = data.value?.data || null
+        }
+      }
+    }
+
+    function clearAuth() {
+      token.value = null
+      user.value = null
+    }
+
+    // Existing actions
     async function fetchCategories() {
         const { getTourCategories } = useApi()
         const { data } = await getTourCategories()
-        // 假设后端返回的数据结构是 result.data
         categories.value = data.value?.data || []
     }
 
-    // 获取列表 (对应 getTourList)
     async function fetchArticles(payload) {
         const { getTourList } = useApi()
         const { data } = await getTourList(payload)
         articles.value = data.value?.data || []
     }
 
-    // 获取详情 (对应 getTourDetail)
     async function fetchArticleDetail(id) {
         const { getTourDetail } = useApi()
-        // 注意参数结构，根据 API 定义可能需要传对象 { id: id }
         const { data } = await getTourDetail({ id }) 
         articleDetail.value = data.value?.data || null
     }
 
     return {
+        // Existing
         categories,
         articles,
         articleDetail,
         fetchCategories,
         fetchArticles,
-        fetchArticleDetail
+        fetchArticleDetail,
+        // Auth
+        token,
+        user,
+        isLoggedIn,
+        setToken,
+        fetchUser,
+        clearAuth
     }
 })

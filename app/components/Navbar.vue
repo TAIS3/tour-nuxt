@@ -185,7 +185,7 @@
               </ul>
             </li>
 
-            <li class="nav-item dropdown ms-lg-3">
+            <li class="nav-item dropdown">
               <a
                 class="nav-link dropdown-toggle lang-btn d-inline-flex align-items-center"
                 href="#"
@@ -205,6 +205,56 @@
                     {{ (lang.name || lang).toUpperCase() }}
                   </a>
                 </li>
+              </ul>
+            </li>
+
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle lang-btn" href="#" role="button" data-bs-toggle="dropdown">
+                <i class="iconfont icon-global me-2">🌐</i>会员
+              </a>
+              <ul class="dropdown-menu simple-menu border-0 shadow-lg p-2">
+                <template v-if="!isLoggedIn">
+                  <li>
+                    <NuxtLink class="dropdown-item rounded" :to="localePath('/login')">
+                      登录
+                    </NuxtLink>
+                  </li>
+                  <li>
+                    <NuxtLink class="dropdown-item rounded" :to="localePath('/register')">
+                      注册
+                    </NuxtLink>
+                  </li>
+                </template>
+                <template v-if="isLoggedIn">
+                  <li>
+                    <NuxtLink class="dropdown-item rounded" :to="localePath('/orderlist')">
+                      我的订单
+                    </NuxtLink>
+                  </li>
+                  <li>
+                    <NuxtLink class="dropdown-item rounded" :to="localePath('/cart')">
+                      购物车
+                    </NuxtLink>
+                  </li>
+                  <li>
+                    <NuxtLink class="dropdown-item rounded" :to="localePath('/member-center')">
+                      会员中心
+                    </NuxtLink>
+                  </li>
+                   <li>
+                    <NuxtLink class="dropdown-item rounded" :to="localePath('/change-password')">
+                      修改密码
+                    </NuxtLink>
+                  </li>
+                  <li>
+                    <hr class="dropdown-divider">
+                  </li>
+                  <li>
+                    <a class="dropdown-item rounded" href="#" @click.prevent="logout">
+                      退出登录
+                    </a>
+                  </li>
+                </template>
               </ul>
             </li>
 
@@ -239,6 +289,7 @@
 </template>
 
 <script setup>
+import { storeToRefs } from 'pinia';
 // 1. 引入依赖
 const {
   getTourCategories,
@@ -246,19 +297,31 @@ const {
   getSinglePageNav,
   getSupportedLangs,
   getLanguageJson,
+  logout: apiLogout,
 } = useApi();
 const { t, locale, setLocaleMessage, getLocaleMessage } = useI18n();
 const langStore = useLangStore();
 const localePath = useLocalePath();
 const switchLocalePath = useSwitchLocalePath();
 const loadingIndicator = useLoadingIndicator();
+const router = useRouter();
+
+const mainStore = useMainStore();
+const { isLoggedIn, user } = storeToRefs(mainStore);
 
 const isMobile = ref(false)
+
 onMounted(() => {
   const checkMobile = () => isMobile.value = window.innerWidth < 992
   checkMobile()
   window.addEventListener('resize', checkMobile)
 })
+
+const logout = async () => {
+  await apiLogout(); // Call the API to invalidate the token on the server
+  mainStore.clearAuth(); // Clear local state and cookie
+  await router.push(localePath('/'));
+};
 
 // 2. 数据获取
 const { data: navData } = await useAsyncData(

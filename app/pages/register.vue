@@ -23,6 +23,25 @@
                     :placeholder="t('login.emailPlaceholder') || 'name@example.com'"
                     required
                   >
+                  <button type="button" class="btn btn-outline-secondary" @click="handleSendCode" :disabled="countdown > 0">
+                    {{ countdown > 0 ? `${countdown}s` : t('register.sendCode') || 'Send Code' }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-secondary">{{ t('register.verificationCode') || 'Verification Code' }}</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-white border-end-0 text-muted">
+                    <i class="bi bi-shield-check"></i>
+                  </span>
+                  <input 
+                    v-model="form.code"
+                    type="text" 
+                    class="form-control border-start-0 ps-0" 
+                    :placeholder="t('register.verificationCodePlaceholder') || 'Enter your code'"
+                    required
+                  >
                 </div>
               </div>
 
@@ -101,36 +120,103 @@
 const { t } = useI18n()
 const localePath = useLocalePath()
 const router = useRouter()
+const { sendCode, register } = useApi()
 
 const form = reactive({
   email: '',
   password: '',
-  confirmPassword: ''
+  confirmPassword: '',
+  code: ''
 })
 
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const loading = ref(false)
+const countdown = ref(0)
+let timer = null
 
 const passwordMismatch = computed(() => {
   return form.confirmPassword && form.password !== form.confirmPassword
 })
 
+const handleSendCode = async () => {
+  if (!form.email) {
+    // You might want to add a toast notification here
+    alert('Please enter your email address.');
+    return;
+  }
+  
+  // Start countdown
+  countdown.value = 60;
+  timer = setInterval(() => {
+    countdown.value--;
+    if (countdown.value <= 0) {
+      clearInterval(timer);
+    }
+  }, 1000);
+
+  try {
+    // 实际调用 API
+    // const { error } = await sendCode({
+    //   email: form.email,
+    //   event: 'register' 
+    // });
+    // if (error.value) {
+    //   console.error('Failed to send code:', error.value);
+    //   alert('Failed to send verification code. Please try again.');
+    //   countdown.value = 0;
+    //   clearInterval(timer);
+    // } else {
+    //   alert('Verification code sent successfully.');
+    // }
+    console.log('Sending code to:', form.email);
+    
+  } catch (err) {
+    console.error('An unexpected error occurred:', err);
+    alert('An unexpected error occurred. Please try again.');
+    countdown.value = 0;
+    clearInterval(timer);
+  }
+}
+
 const handleRegister = async () => {
-  if (!form.email || !form.password || passwordMismatch.value) return
+  if (!form.email || !form.password || !form.code || passwordMismatch.value) return
 
   loading.value = true
   try {
-    // 模拟请求延迟
+    // 实际调用API
+    // const { error } = await register({
+    //   email: form.email,
+    //   password: form.password,
+    //   captcha: form.code,
+    //   // 可能还需要其他字段
+    // });
+
+    // if (error.value) {
+    //   console.error('Registration failed:', error.value);
+    //   alert('Registration failed. Please check your information.');
+    // } else {
+    //   alert('Registration successful! Please login.');
+    //   router.push(localePath('/login'));
+    // }
+
+    // 模拟请求
     await new Promise(resolve => setTimeout(resolve, 1000))
     console.log('Register payload:', form)
-    // router.push(localePath('/login'))
+    router.push(localePath('/login'))
+    
   } catch (error) {
     console.error('Register failed:', error)
   } finally {
     loading.value = false
   }
 }
+
+onUnmounted(() => {
+  if (timer) {
+    clearInterval(timer);
+  }
+})
 
 useHead({
   title: computed(() => t('register.title') || 'Sign Up')

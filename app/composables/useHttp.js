@@ -15,7 +15,13 @@ export const useHttp = (url, options = {}) => {
   const apiTarget = config.public.apiTarget || 'https://www.eztripcn.com'
   options.headers.Referer = apiTarget
 
-  // 2. GET 请求处理 (自动注入 lang)
+  // 2. Token 鉴权
+  const token = useCookie('fa-token').value
+  if (token) {
+    options.headers.token = token
+  }
+
+  // 3. GET 请求处理 (自动注入 lang)
   if (!options.method || options.method === 'GET') {
     options.params = options.params || {}
     if (!options.params.lang) {
@@ -23,7 +29,7 @@ export const useHttp = (url, options = {}) => {
     }
   }
 
-  // 3. POST 请求处理 (自动注入 lang + 转换为 Form Data)
+  // 4. POST 请求处理 (自动注入 lang + 转换为 Form Data)
   if (options.method === 'POST' || options.method === 'PUT') {
     let payload = options.body || {}
     

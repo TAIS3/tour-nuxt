@@ -122,5 +122,43 @@ export const useApi = () => {
         body: payload
       })
     },
+
+    // 16. 发送验证码
+    sendCode: (payload) => {
+      return useHttp('/api/ems/send', {
+        method: 'POST',
+        body: payload,
+      });
+    },
+
+    // 17. 用户注册
+    register: (payload) => {
+      return useHttp('/api/user/register', {
+        method: 'POST',
+        body: payload,
+      });
+    },
+
+    // 18. 用户登录
+    login: (payload) => {
+      return useHttp('/api/user/login', {
+        method: 'POST',
+        body: payload,
+      });
+    },
+
+    // 19. 用户登出
+    logout: () => {
+      return useHttp('/api/user/logout', {
+        method: 'POST',
+      });
+    },
+
+    // 20. 获取用户信息
+    getUserInfo: () => {
+      return useHttp('/api/user/getuserinfo', {
+        method: 'POST',
+      });
+    },
   }
 }

@@ -89,7 +89,8 @@
 const { t } = useI18n()
 const localePath = useLocalePath()
 const router = useRouter()
-// const { login } = useApi() // 待接入 API
+const { login } = useApi()
+const store = useMainStore()
 
 const form = reactive({
   email: '',
@@ -105,16 +106,47 @@ const handleLogin = async () => {
 
   loading.value = true
   try {
-    // TODO: 调用实际的登录接口
-    // const res = await login({ ...form })
+    // 模拟API调用 - start
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const fakeResponse = {
+      data: {
+        value: {
+          data: {
+            token: 'fake-token-from-api-12345',
+            userinfo: {
+              id: 1,
+              username: 'testuser',
+              email: form.email
+            }
+          }
+        }
+      },
+      error: ref(null)
+    };
+    // 模拟API调用 - end
     
-    // 模拟请求延迟
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // TODO: 实际调用登录接口
+    // const { data: response, error } = await login({ 
+    //   account: form.email, 
+    //   password: form.password 
+    // });
     
-    console.log('Login payload:', form)
-    
-    // 登录成功后跳转
-    // router.push(localePath('/'))
+    const response = fakeResponse; // 使用模拟数据
+    const error = fakeResponse.error; // 使用模拟数据
+
+    if (error.value) {
+      console.error('Login failed:', error.value)
+      alert('Login failed. Please check your credentials.')
+    } else {
+      const token = response.data.value?.data?.token;
+      if (token) {
+        store.setToken(token);
+        await store.fetchUser(); // 获取用户信息
+        router.push(localePath('/'));
+      } else {
+        alert('Login failed: Token not found in response.')
+      }
+    }
     
   } catch (error) {
     console.error('Login failed:', error)
