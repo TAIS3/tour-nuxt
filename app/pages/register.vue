@@ -1,5 +1,6 @@
 <template>
   <div class="register-page d-flex align-items-center justify-content-center">
+
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-md-6 col-lg-5 col-xl-4">
@@ -10,9 +11,28 @@
             </div>
 
             <form @submit.prevent="handleRegister">
+              
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-secondary">{{ t('login.username') || 'Username' }}</label>
+                <div class="input-group custom-input-group">
+                  <span class="input-group-text bg-white border-end-0 text-muted">
+                    <i class="bi bi-person"></i>
+                  </span>
+                  <input 
+                    v-model="form.username"
+                    type="text" 
+                    class="form-control border-start-0 ps-0" 
+                    :placeholder="t('login.usernamePlaceholder') || 'Enter your username'"
+                    required
+                    minlength="3"
+                    maxlength="30"
+                  >
+                </div>
+              </div>
+
               <div class="mb-3">
                 <label class="form-label small fw-bold text-secondary">{{ t('login.email') || 'Email Address' }}</label>
-                <div class="input-group">
+                <div class="input-group custom-input-group">
                   <span class="input-group-text bg-white border-end-0 text-muted">
                     <i class="bi bi-envelope"></i>
                   </span>
@@ -23,7 +43,13 @@
                     :placeholder="t('login.emailPlaceholder') || 'name@example.com'"
                     required
                   >
-                  <button type="button" class="btn btn-outline-secondary" @click="handleSendCode" :disabled="countdown > 0">
+                  <button 
+                    type="button" 
+                    class="btn btn-outline-secondary" 
+                    @click="handleSendCode" 
+                    :disabled="countdown > 0 || !isEmailValid || sendingCode"
+                  >
+                    <span v-if="sendingCode" class="spinner-border spinner-border-sm me-1"></span>
                     {{ countdown > 0 ? `${countdown}s` : t('register.sendCode') || 'Send Code' }}
                   </button>
                 </div>
@@ -31,7 +57,7 @@
 
               <div class="mb-3">
                 <label class="form-label small fw-bold text-secondary">{{ t('register.verificationCode') || 'Verification Code' }}</label>
-                <div class="input-group">
+                <div class="input-group custom-input-group">
                   <span class="input-group-text bg-white border-end-0 text-muted">
                     <i class="bi bi-shield-check"></i>
                   </span>
@@ -39,7 +65,7 @@
                     v-model="form.code"
                     type="text" 
                     class="form-control border-start-0 ps-0" 
-                    :placeholder="t('register.verificationCodePlaceholder') || 'Enter your code'"
+                    :placeholder="t('register.verificationCodePlaceholder') || 'Enter code from email'"
                     required
                   >
                 </div>
@@ -47,7 +73,7 @@
 
               <div class="mb-3">
                 <label class="form-label small fw-bold text-secondary">{{ t('login.password') || 'Password' }}</label>
-                <div class="input-group">
+                <div class="input-group custom-input-group">
                   <span class="input-group-text bg-white border-end-0 text-muted">
                     <i class="bi bi-lock"></i>
                   </span>
@@ -70,7 +96,7 @@
 
               <div class="mb-4">
                 <label class="form-label small fw-bold text-secondary">{{ t('register.confirmPassword') || 'Confirm Password' }}</label>
-                <div class="input-group">
+                <div class="input-group custom-input-group">
                   <span class="input-group-text bg-white border-end-0 text-muted">
                     <i class="bi bi-lock-fill"></i>
                   </span>
@@ -88,7 +114,8 @@
                     <i class="bi" :class="showConfirmPassword ? 'bi-eye' : 'bi-eye-slash'"></i>
                   </span>
                 </div>
-                <div v-if="passwordMismatch" class="text-danger small mt-1">
+                <div v-if="passwordMismatch" class="text-danger small mt-1 ps-1">
+                  <i class="bi bi-exclamation-circle me-1"></i>
                   {{ t('register.passwordMismatch') || 'Passwords do not match' }}
                 </div>
               </div>
@@ -117,12 +144,16 @@
 </template>
 
 <script setup>
+import swal from 'sweetalert'
+
 const { t } = useI18n()
 const localePath = useLocalePath()
 const router = useRouter()
 const { sendCode, register } = useApi()
 
+// 表单数据
 const form = reactive({
+  username: '', 
   email: '',
   password: '',
   confirmPassword: '',
@@ -132,81 +163,106 @@ const form = reactive({
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const loading = ref(false)
+const sendingCode = ref(false)
 const countdown = ref(0)
 let timer = null
+
+const isEmailValid = computed(() => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)
+})
 
 const passwordMismatch = computed(() => {
   return form.confirmPassword && form.password !== form.confirmPassword
 })
 
 const handleSendCode = async () => {
-  if (!form.email) {
-    // You might want to add a toast notification here
-    alert('Please enter your email address.');
-    return;
+  if (!isEmailValid.value) {
+    swal(t('login.emailError') || 'Please enter a valid email address.', { icon: 'error' })
+    return
   }
   
-  // Start countdown
-  countdown.value = 60;
-  timer = setInterval(() => {
-    countdown.value--;
-    if (countdown.value <= 0) {
-      clearInterval(timer);
-    }
-  }, 1000);
-
+  sendingCode.value = true
+  
   try {
-    // 实际调用 API
-    // const { error } = await sendCode({
-    //   email: form.email,
-    //   event: 'register' 
-    // });
-    // if (error.value) {
-    //   console.error('Failed to send code:', error.value);
-    //   alert('Failed to send verification code. Please try again.');
-    //   countdown.value = 0;
-    //   clearInterval(timer);
-    // } else {
-    //   alert('Verification code sent successfully.');
-    // }
-    console.log('Sending code to:', form.email);
-    
+    const { data, error } = await sendCode({
+      email: form.email,
+      event: 'register' 
+    })
+
+    const res = data.value
+    const err = error.value
+
+    if (err || (res && res.code !== 1)) {
+      const msg = err ? err.message : (res ? res.msg : 'Error')
+      swal(msg, { icon: 'error' })
+    } else {
+      swal(res.msg || 'Verification code sent successfully.', { icon: 'success' })
+      startCountdown()
+    }
   } catch (err) {
-    console.error('An unexpected error occurred:', err);
-    alert('An unexpected error occurred. Please try again.');
-    countdown.value = 0;
-    clearInterval(timer);
+    console.error('API Error:', err)
+    swal('Network error, please try again.', { icon: 'error' })
+  } finally {
+    sendingCode.value = false
   }
 }
 
+const startCountdown = () => {
+  countdown.value = 60
+  if (timer) clearInterval(timer)
+  timer = setInterval(() => {
+    countdown.value--
+    if (countdown.value <= 0) {
+      clearInterval(timer)
+    }
+  }, 1000)
+}
+
 const handleRegister = async () => {
-  if (!form.email || !form.password || !form.code || passwordMismatch.value) return
+  if (!form.username || !form.email || !form.password || !form.code) {
+    swal('Please fill in all required fields.', { icon: 'error' })
+    return
+  }
+  if (passwordMismatch.value) return
 
   loading.value = true
   try {
-    // 实际调用API
-    // const { error } = await register({
-    //   email: form.email,
-    //   password: form.password,
-    //   captcha: form.code,
-    //   // 可能还需要其他字段
-    // });
+    const payload = {
+      username: form.username,
+      password: form.password,
+      email: form.email,
+      code: form.code,
+      mobile: '' 
+    }
 
-    // if (error.value) {
-    //   console.error('Registration failed:', error.value);
-    //   alert('Registration failed. Please check your information.');
-    // } else {
-    //   alert('Registration successful! Please login.');
-    //   router.push(localePath('/login'));
-    // }
-
-    // 模拟请求
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    console.log('Register payload:', form)
-    router.push(localePath('/login'))
+    const { data, error } = await register(payload)
     
-  } catch (error) {
-    console.error('Register failed:', error)
+    const res = data.value
+    const err = error.value
+
+    if (err || (res && res.code !== 1)) {
+      const msg = err ? err.message : (res ? res.msg : 'Error')
+      swal(msg, { icon: 'error' })
+    } else {
+      if (res.data && res.data.userinfo) {
+        const tokenCookie = useCookie('token')
+        tokenCookie.value = res.data.userinfo.token 
+        
+        swal('Registration successful!', { icon: 'success' })
+        
+        setTimeout(() => {
+          router.push(localePath('/'))
+        }, 1000)
+      } else {
+        swal('Registration successful! Please login.', { icon: 'success' })
+        setTimeout(() => {
+          router.push(localePath('/login'))
+        }, 1500)
+      }
+    }
+  } catch (err) {
+    console.error('Register API Error:', err)
+    swal('An unexpected error occurred.', { icon: 'error' })
   } finally {
     loading.value = false
   }
@@ -214,7 +270,7 @@ const handleRegister = async () => {
 
 onUnmounted(() => {
   if (timer) {
-    clearInterval(timer);
+    clearInterval(timer)
   }
 })
 
@@ -240,16 +296,39 @@ $bg-page: #f5f7fa;
   border: 1px solid rgba(0,0,0,0.04);
 }
 
-.form-control, .input-group-text {
-  padding: 0.75rem 1rem;
-  &:focus {
-    box-shadow: none;
+.custom-input-group {
+  border-radius: 0.375rem; 
+  overflow: hidden;
+  transition: all 0.2s ease;
+  border: 1px solid #ced4da; 
+
+  .input-group-text,
+  .form-control {
+    border: none; 
+    box-shadow: none !important; 
+  }
+
+  .form-control::placeholder {
+    color: #b0b0b0;
+    font-weight: 300;
+    font-size: 0.9rem;
+  }
+
+  &:focus-within {
     border-color: $theme-color;
+    box-shadow: 0 0 0 0.25rem rgba($theme-color, 0.15); 
+    
+    .input-group-text {
+      color: $theme-color !important;
+    }
   }
 }
 
 .input-group-text {
   font-size: 1.1rem;
+  background-color: #fff;
+  color: #6c757d; 
+  transition: color 0.2s ease;
 }
 
 .btn-theme {
@@ -266,6 +345,7 @@ $bg-page: #f5f7fa;
   &:disabled {
     background-color: color.scale($theme-color, $lightness: 15%);
     border-color: color.scale($theme-color, $lightness: 15%);
+    cursor: not-allowed;
   }
 }
 
