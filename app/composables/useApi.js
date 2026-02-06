@@ -158,7 +158,7 @@ export const useApi = () => {
     // 16. 发送邮箱验证码 (EMS)
     // 注意：FastAdmin 后端使用的是 Ems::check，所以这里调用 ems 接口
     sendCode: (payload) => {
-      return request('/api/ems/send', {
+      return request('/api/xilutour.user/send', {
         method: 'POST',
         body: payload, // 格式: { email: 'xx@xx.com', event: 'register' }
       });
@@ -166,23 +166,26 @@ export const useApi = () => {
 
     // 17. 用户注册
     register: (payload) => {
-      return request('/api/user/register', {
+      // 【修改】指向西陆旅游插件下的 User 控制器
+      return request('/api/xilutour.user/register', {
         method: 'POST',
-        body: payload, // 格式: { username, password, email, mobile, code }
+        body: payload, // { username, password, email, mobile, code }
       });
     },
 
-    // 18. 用户登录
+    // 18. 用户登录 (修改路径)
     login: (payload) => {
-      return request('/api/user/login', {
+      // 改为调用 xilutour.user 下的 login
+      return useHttp('/api/xilutour.user/login', {
         method: 'POST',
-        body: payload,
+        body: payload, // payload 需包含 { account: '...', password: '...' }
       });
     },
 
-    // 19. 用户登出
+    // 19. 用户登出 (修改路径)
     logout: () => {
-      return request('/api/user/logout', {
+      // 改为调用 xilutour.user 下的 logout
+      return useHttp('/api/xilutour.user/logout', {
         method: 'POST',
       });
     },

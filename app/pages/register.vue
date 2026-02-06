@@ -144,7 +144,7 @@
 </template>
 
 <script setup>
-import swal from 'sweetalert'
+import swal from 'sweetalert' // 保持你文件中的 sweetalert 引用
 
 const { t } = useI18n()
 const localePath = useLocalePath()
@@ -177,6 +177,7 @@ const passwordMismatch = computed(() => {
 
 const handleSendCode = async () => {
   if (!isEmailValid.value) {
+    // 替换硬编码：邮箱格式错误
     swal(t('login.emailError') || 'Please enter a valid email address.', { icon: 'error' })
     return
   }
@@ -196,12 +197,14 @@ const handleSendCode = async () => {
       const msg = err ? err.message : (res ? res.msg : 'Error')
       swal(msg, { icon: 'error' })
     } else {
-      swal(res.msg || 'Verification code sent successfully.', { icon: 'success' })
+      // 替换硬编码：验证码发送成功
+      swal(res.msg || t('register.codeSent') || 'Verification code sent successfully.', { icon: 'success' })
       startCountdown()
     }
   } catch (err) {
     console.error('API Error:', err)
-    swal('Network error, please try again.', { icon: 'error' })
+    // 替换硬编码：网络错误
+    swal(t('register.errorNetwork') || 'Network error, please try again.', { icon: 'error' })
   } finally {
     sendingCode.value = false
   }
@@ -219,8 +222,10 @@ const startCountdown = () => {
 }
 
 const handleRegister = async () => {
+  // 校验必填项
   if (!form.username || !form.email || !form.password || !form.code) {
-    swal('Please fill in all required fields.', { icon: 'error' })
+    // 替换硬编码：必填项错误
+    swal(t('register.errorFill') || 'Please fill in all required fields.', { icon: 'error' })
     return
   }
   if (passwordMismatch.value) return
@@ -232,7 +237,7 @@ const handleRegister = async () => {
       password: form.password,
       email: form.email,
       code: form.code,
-      mobile: '' 
+      mobile: '' // 保持 mobile 为空字符串以符合后端接口要求
     }
 
     const { data, error } = await register(payload)
@@ -245,16 +250,19 @@ const handleRegister = async () => {
       swal(msg, { icon: 'error' })
     } else {
       if (res.data && res.data.userinfo) {
+        // 保存 token
         const tokenCookie = useCookie('token')
         tokenCookie.value = res.data.userinfo.token 
         
-        swal('Registration successful!', { icon: 'success' })
+        // 替换硬编码：注册成功（自动登录）
+        swal(t('register.success') || 'Registration successful!', { icon: 'success' })
         
         setTimeout(() => {
           router.push(localePath('/'))
         }, 1000)
       } else {
-        swal('Registration successful! Please login.', { icon: 'success' })
+        // 替换硬编码：注册成功（需手动登录）
+        swal(t('register.successLogin') || 'Registration successful! Please login.', { icon: 'success' })
         setTimeout(() => {
           router.push(localePath('/login'))
         }, 1500)
@@ -262,7 +270,8 @@ const handleRegister = async () => {
     }
   } catch (err) {
     console.error('Register API Error:', err)
-    swal('An unexpected error occurred.', { icon: 'error' })
+    // 替换硬编码：未知错误
+    swal(t('register.errorUnknown') || 'An unexpected error occurred.', { icon: 'error' })
   } finally {
     loading.value = false
   }

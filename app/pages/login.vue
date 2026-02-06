@@ -12,7 +12,7 @@
             <form @submit.prevent="handleLogin">
               <div class="mb-3">
                 <label class="form-label small fw-bold text-secondary">{{ t('login.email') || 'Email Address' }}</label>
-                <div class="input-group">
+                <div class="input-group custom-input-group">
                   <span class="input-group-text bg-white border-end-0 text-muted">
                     <i class="bi bi-envelope"></i>
                   </span>
@@ -30,7 +30,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                   <label class="form-label small fw-bold text-secondary">{{ t('login.password') || 'Password' }}</label>
                 </div>
-                <div class="input-group">
+                <div class="input-group custom-input-group">
                   <span class="input-group-text bg-white border-end-0 text-muted">
                     <i class="bi bi-lock"></i>
                   </span>
@@ -68,14 +68,14 @@
                 :disabled="loading"
               >
                 <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
-                {{ t('login.signIn') || 'Sign In' }}
+                {{ t('commonConfig.login') || 'Sign In' }}
               </button>
             </form>
 
             <div class="mt-4 text-center small text-muted">
               {{ t('login.noAccount') || "Don't have an account?" }}
               <NuxtLink :to="localePath('/register')" class="theme-text fw-bold text-decoration-none ms-1">
-                {{ t('login.signUp') || 'Sign Up' }}
+                {{ t('commonConfig.register') || 'Sign Up' }}
               </NuxtLink>
             </div>
           </div>
@@ -86,6 +86,8 @@
 </template>
 
 <script setup>
+import swal from 'sweetalert' // 引入 SweetAlert
+
 const { t } = useI18n()
 const localePath = useLocalePath()
 const router = useRouter()
@@ -102,54 +104,50 @@ const showPassword = ref(false)
 const loading = ref(false)
 
 const handleLogin = async () => {
-  if (!form.email || !form.password) return
+  // 1. 必填校验
+  if (!form.email || !form.password) {
+    swal(t('login.errorFill') || 'Please fill in all required fields.', { icon: 'error' })
+    return
+  }
 
   loading.value = true
   try {
-    // 模拟API调用 - start
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    const fakeResponse = {
-      data: {
-        value: {
-          data: {
-            token: 'fake-token-from-api-12345',
-            userinfo: {
-              id: 1,
-              username: 'testuser',
-              email: form.email
-            }
-          }
-        }
-      },
-      error: ref(null)
-    };
-    // 模拟API调用 - end
-    
-    // TODO: 实际调用登录接口
-    // const { data: response, error } = await login({ 
-    //   account: form.email, 
-    //   password: form.password 
-    // });
-    
-    const response = fakeResponse; // 使用模拟数据
-    const error = fakeResponse.error; // 使用模拟数据
+    // 2. 真实 API 调用
+    // 后端接口 user/login 接收 'account' 和 'password'
+    const { data: response, error } = await login({ 
+      account: form.email, 
+      password: form.password 
+    });
 
     if (error.value) {
       console.error('Login failed:', error.value)
-      alert('Login failed. Please check your credentials.')
+      // 错误提示国际化
+      swal(t('login.errorCredentials') || 'Login failed. Please check your credentials.', { icon: 'error' })
     } else {
-      const token = response.data.value?.data?.token;
-      if (token) {
-        store.setToken(token);
-        await store.fetchUser(); // 获取用户信息
-        router.push(localePath('/'));
+      const resData = response.value; // useFetch 返回的是 Ref
+      
+      // FastAdmin 标准：code=1 为成功
+      if (resData && resData.code === 1) {
+        const token = resData.data?.userinfo?.token;
+        if (token) {
+          store.setToken(token);
+          // 登录成功直接跳转，通常不需要弹窗打断，除非你有特殊需求
+          // swal(t('login.success') || 'Login successful!', { icon: 'success', timer: 1500, buttons: false })
+          await store.fetchUser(); 
+          router.push(localePath('/'));
+        } else {
+          swal(t('login.errorToken') || 'Login failed: Token not found.', { icon: 'error' })
+        }
       } else {
-        alert('Login failed: Token not found in response.')
+        // 业务逻辑错误（如密码错误）
+        const msg = resData?.msg || t('login.errorCredentials');
+        swal(msg, { icon: 'error' });
       }
     }
     
   } catch (error) {
-    console.error('Login failed:', error)
+    console.error('Login system error:', error)
+    swal(t('register.errorNetwork') || 'Network error.', { icon: 'error' })
   } finally {
     loading.value = false
   }
@@ -162,16 +160,12 @@ useHead({
 
 <style lang="scss" scoped>
 @use "sass:color";
-// 变量映射，保持与项目一致
 $theme-color: $mainColor; 
 $bg-page: #f5f7fa;
 
 .login-page {
   min-height: 100vh;
   background-color: $bg-page;
-  // 如果有背景图可以取消注释
-  // background-image: url('/static/images/login-bg.jpg');
-  // background-size: cover;
 }
 
 .login-card {
@@ -181,16 +175,40 @@ $bg-page: #f5f7fa;
   border: 1px solid rgba(0,0,0,0.04);
 }
 
-.form-control, .input-group-text {
-  padding: 0.75rem 1rem;
-  &:focus {
-    box-shadow: none;
+// 统一输入框样式 (参考 Register)
+.custom-input-group {
+  border-radius: 0.375rem; 
+  overflow: hidden;
+  transition: all 0.2s ease;
+  border: 1px solid #ced4da; 
+
+  .input-group-text,
+  .form-control {
+    border: none; 
+    box-shadow: none !important; 
+  }
+
+  .form-control::placeholder {
+    color: #b0b0b0;
+    font-weight: 300;
+    font-size: 0.9rem;
+  }
+
+  &:focus-within {
     border-color: $theme-color;
+    box-shadow: 0 0 0 0.25rem rgba($theme-color, 0.15); 
+    
+    .input-group-text {
+      color: $theme-color !important;
+    }
   }
 }
 
 .input-group-text {
   font-size: 1.1rem;
+  background-color: #fff;
+  color: #6c757d; 
+  transition: color 0.2s ease;
 }
 
 .btn-theme {

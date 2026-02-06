@@ -210,40 +210,40 @@
 
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle lang-btn" href="#" role="button" data-bs-toggle="dropdown">
-                <i class="iconfont icon-global me-2">🌐</i>会员
+                <i class="bi bi-person-fill me-2"></i>{{ t('commonConfig.member') }}
               </a>
               <ul class="dropdown-menu simple-menu border-0 shadow-lg p-2">
                 <template v-if="!isLoggedIn">
                   <li>
                     <NuxtLink class="dropdown-item rounded" :to="localePath('/login')">
-                      登录
+                      {{ t('commonConfig.login') }}
                     </NuxtLink>
                   </li>
                   <li>
                     <NuxtLink class="dropdown-item rounded" :to="localePath('/register')">
-                      注册
+                      {{ t('commonConfig.register') }}
                     </NuxtLink>
                   </li>
                 </template>
                 <template v-if="isLoggedIn">
                   <li>
-                    <NuxtLink class="dropdown-item rounded" :to="localePath('/orderlist')">
-                      我的订单
+                    <NuxtLink class="dropdown-item rounded" :to="localePath('/member/orderlist')">
+                      {{ t('commonConfig.myOrders') }}
                     </NuxtLink>
                   </li>
                   <li>
-                    <NuxtLink class="dropdown-item rounded" :to="localePath('/cart')">
-                      购物车
+                    <NuxtLink class="dropdown-item rounded" :to="localePath('/member/cart')">
+                      {{ t('commonConfig.cart') }}
                     </NuxtLink>
                   </li>
                   <li>
-                    <NuxtLink class="dropdown-item rounded" :to="localePath('/member-center')">
-                      会员中心
+                    <NuxtLink class="dropdown-item rounded" :to="localePath('/member/member-center')">
+                      {{ t('commonConfig.memberCenter') }}
                     </NuxtLink>
                   </li>
                    <li>
-                    <NuxtLink class="dropdown-item rounded" :to="localePath('/change-password')">
-                      修改密码
+                    <NuxtLink class="dropdown-item rounded" :to="localePath('/member/change-password')">
+                      {{ t('commonConfig.changePassword') }}
                     </NuxtLink>
                   </li>
                   <li>
@@ -251,7 +251,7 @@
                   </li>
                   <li>
                     <a class="dropdown-item rounded" href="#" @click.prevent="logout">
-                      退出登录
+                      {{ t('commonConfig.logout') }}
                     </a>
                   </li>
                 </template>
