@@ -131,10 +131,14 @@ const handleLogin = async () => {
         const token = resData.data?.userinfo?.token;
         if (token) {
           store.setToken(token);
-          // 登录成功直接跳转，通常不需要弹窗打断，除非你有特殊需求
-          // swal(t('login.success') || 'Login successful!', { icon: 'success', timer: 1500, buttons: false })
+          
           await store.fetchUser(); 
-          router.push(localePath('/'));
+          swal(t('login.success') || 'Login successful!', { 
+            icon: 'success' 
+          }).then(() => {
+             router.push(localePath('/'));
+          });
+
         } else {
           swal(t('login.errorToken') || 'Login failed: Token not found.', { icon: 'error' })
         }

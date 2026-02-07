@@ -4,12 +4,19 @@ export const useApi = () => {
   const request = async (url, options = {}) => {
     const config = useRuntimeConfig()
     // 使用 cookie 存储 token，支持 SSR
-    const token = useCookie('token') 
+    const token = useCookie('token')
+
+    // useNuxtApp() 在 Nuxt 的任何上下文中均可用
+    const nuxtApp = useNuxtApp()
+    // 获取当前语言代码，如果获取失败则默认为 zh-cn
+    const currentLang = nuxtApp.$i18n?.locale?.value || 'zh-cn'
     
     // 自动携带 Token
     const headers = {
       ...options.headers,
-      token: token.value || '' 
+      token: token.value || '',
+      // 传递当前语言给后端，后端 loadJsonLanguage 会用到
+      lang: currentLang
     }
 
     // API 基础路径，如果没有配置 public.apiBase，默认为空字符串 (即同域)
@@ -25,8 +32,6 @@ export const useApi = () => {
         if (response._data?.code === 401) {
            const token = useCookie('token')
            token.value = null
-           // 可选：自动跳转到登录页
-           // navigateTo('/login') 
         }
       }
     })
@@ -192,7 +197,7 @@ export const useApi = () => {
 
     // 20. 获取用户信息
     getUserInfo: () => {
-      return request('/api/user/getuserinfo', {
+      return request('/api/xilutour.user/info', {
         method: 'POST',
       });
     },

@@ -255,17 +255,21 @@ const handleRegister = async () => {
         tokenCookie.value = res.data.userinfo.token 
         
         // 替换硬编码：注册成功（自动登录）
-        swal(t('register.success') || 'Registration successful!', { icon: 'success' })
-        
-        setTimeout(() => {
+        swal(t('register.success') || 'Registration successful!', { 
+          icon: 'success',
+          button: "OK", // 按钮文字，也可以不用写，默认是 OK
+        }).then(() => {
+          // 用户点击按钮后，执行跳转
           router.push(localePath('/'))
-        }, 1000)
+        })
+        
       } else {
         // 替换硬编码：注册成功（需手动登录）
-        swal(t('register.successLogin') || 'Registration successful! Please login.', { icon: 'success' })
-        setTimeout(() => {
+        swal(t('register.successLogin') || 'Registration successful! Please login.', { 
+          icon: 'success' 
+        }).then(() => {
           router.push(localePath('/login'))
-        }, 1500)
+        })
       }
     }
   } catch (err) {
