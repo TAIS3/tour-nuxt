@@ -14,9 +14,21 @@ export const useApi = () => {
     // 自动携带 Token
     const headers = {
       ...options.headers,
-      token: token.value || '',
-      // 传递当前语言给后端，后端 loadJsonLanguage 会用到
-      lang: currentLang
+      token: token.value || ''
+    }
+
+    // 3. 自动注入 lang 参数 (对齐 useHttp 的行为)
+    // 这样后端可以通过 $this->request->param('lang') 获取
+    if (!options.method || options.method.toUpperCase() === 'GET') {
+      options.params = options.params || {}
+      options.params.lang = currentLang
+    } else {
+      // POST 请求处理
+      options.body = options.body || {}
+      // 仅当 body 是普通对象时注入，防止破坏 FormData 等格式
+      if (typeof options.body === 'object' && options.body !== null && !options.body.lang) {
+        options.body.lang = currentLang
+      }
     }
 
     // API 基础路径，如果没有配置 public.apiBase，默认为空字符串 (即同域)
@@ -199,6 +211,14 @@ export const useApi = () => {
     getUserInfo: () => {
       return request('/api/xilutour.user/info', {
         method: 'POST',
+      });
+    },
+
+    // 21. 重置密码 (新增)
+    resetPassword: (payload) => {
+      return request('/api/xilutour.user/resetpwd', {
+        method: 'POST',
+        body: payload, // { email, code, newpassword }
       });
     },
   }

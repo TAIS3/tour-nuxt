@@ -100,6 +100,14 @@ const form = reactive({
   remember: false
 })
 
+onMounted(() => {
+  const savedEmail = localStorage.getItem('remember_account')
+  if (savedEmail) {
+    form.email = savedEmail
+    form.remember = true
+  }
+})
+
 const showPassword = ref(false)
 const loading = ref(false)
 
@@ -130,6 +138,12 @@ const handleLogin = async () => {
       if (resData && resData.code === 1) {
         const token = resData.data?.userinfo?.token;
         if (token) {
+          if (form.remember) {
+            localStorage.setItem('remember_account', form.email)
+          } else {
+            localStorage.removeItem('remember_account')
+          }
+
           store.setToken(token);
           
           await store.fetchUser(); 
@@ -145,6 +159,7 @@ const handleLogin = async () => {
       } else {
         // 业务逻辑错误（如密码错误）
         const msg = resData?.msg || t('login.errorCredentials');
+        
         swal(msg, { icon: 'error' });
       }
     }
