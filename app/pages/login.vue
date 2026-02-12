@@ -57,7 +57,7 @@
                     {{ t('login.rememberMe') || 'Remember me' }}
                   </label>
                 </div>
-                <NuxtLink :to="localePath('/forgot-password')" class="small text-decoration-none theme-text">
+                <NuxtLink :to="localePath('/member/forgot-password')" class="small text-decoration-none theme-text">
                   {{ t('login.forgotPassword') || 'Forgot Password?' }}
                 </NuxtLink>
               </div>
