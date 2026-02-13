@@ -345,6 +345,7 @@ const { data: navData } = await useAsyncData(
   { watch: [locale] }
 );
 
+
 // 3. 数据处理
 const tourCategoryList = computed(() => navData.value?.tourCats?.data || []);
 const sceneryCategoryList = computed(() => navData.value?.sceneryCats?.data || []);
