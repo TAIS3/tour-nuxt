@@ -84,6 +84,7 @@
                     :placeholder="t('login.passwordPlaceholder') || 'Create a password'"
                     required
                     minlength="6"
+                    maxlength="15"
                   >
                   <span 
                     class="input-group-text bg-white border-start-0 cursor-pointer text-muted"
@@ -91,6 +92,10 @@
                   >
                     <i class="bi" :class="showPassword ? 'bi-eye' : 'bi-eye-slash'"></i>
                   </span>
+                </div>
+                <div v-if="isPasswordInvalid" class="text-danger small mt-1 ps-1">
+                  <i class="bi bi-exclamation-circle me-1"></i>
+                  {{ t('member.passwordInvalid') || 'Password must be 6-15 characters and contain both letters and numbers.' }}
                 </div>
               </div>
 
@@ -123,7 +128,7 @@
               <button 
                 type="submit" 
                 class="btn btn-theme w-100 py-2 rounded-pill fw-bold"
-                :disabled="loading || passwordMismatch"
+                :disabled="loading || passwordMismatch || isPasswordInvalid"
               >
                 <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
                 {{ t('register.submit') || 'Sign Up' }}
@@ -145,11 +150,13 @@
 
 <script setup>
 import swal from 'sweetalert' // 保持你文件中的 sweetalert 引用
+import { useValidators } from '~/composables/useValidators'
 
 const { t } = useI18n()
 const localePath = useLocalePath()
 const router = useRouter()
 const { sendCode, register } = useApi()
+const { isValidPassword } = useValidators()
 
 // 表单数据
 const form = reactive({
@@ -173,6 +180,10 @@ const isEmailValid = computed(() => {
 
 const passwordMismatch = computed(() => {
   return form.confirmPassword && form.password !== form.confirmPassword
+})
+
+const isPasswordInvalid = computed(() => {
+  return form.password && !isValidPassword(form.password)
 })
 
 const handleSendCode = async () => {
@@ -228,6 +239,10 @@ const handleRegister = async () => {
     swal(t('register.errorFill') || 'Please fill in all required fields.', { icon: 'error' })
     return
   }
+  if (isPasswordInvalid.value) {
+    swal(t('register.passwordInvalid') || 'Password must be 6-15 characters and contain both letters and numbers.', { icon: 'error' })
+    return
+  }
   if (passwordMismatch.value) return
 
   loading.value = true
@@ -249,28 +264,13 @@ const handleRegister = async () => {
       const msg = err ? err.message : (res ? res.msg : 'Error')
       swal(msg, { icon: 'error' })
     } else {
-      if (res.data && res.data.userinfo) {
-        // 保存 token
-        const tokenCookie = useCookie('token')
-        tokenCookie.value = res.data.userinfo.token 
-        
-        // 替换硬编码：注册成功（自动登录）
-        swal(t('register.success') || 'Registration successful!', { 
-          icon: 'success',
-          button: "OK", // 按钮文字，也可以不用写，默认是 OK
-        }).then(() => {
-          // 用户点击按钮后，执行跳转
-          router.push(localePath('/'))
-        })
-        
-      } else {
-        // 替换硬编码：注册成功（需手动登录）
-        swal(t('register.successLogin') || 'Registration successful! Please login.', { 
-          icon: 'success' 
-        }).then(() => {
-          router.push(localePath('/login'))
-        })
-      }
+      // 统一处理：注册成功后，提示用户并跳转到登录页
+      swal(t('register.successLogin') || 'Registration successful! Please login.', { 
+        icon: 'success',
+        button: t('common.confirm') || "OK",
+      }).then(() => {
+        router.push(localePath('/login'))
+      })
     }
   } catch (err) {
     console.error('Register API Error:', err)

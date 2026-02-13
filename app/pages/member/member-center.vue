@@ -1,14 +1,13 @@
 <template>
-  <div class="profile-page py-5">
+  <div class="profile-page member-page">
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-lg-8">
           <div class="card shadow-lg border-0 rounded-4">
             <div class="card-body p-5">
-              <h3 class="fw-bold mb-4 text-center">{{ t('profile.title') || 'Personal Profile' }}</h3>
+              <h3 class="fw-bold mb-4 text-center">{{ t('member.profileTitle') || 'Personal Profile' }}</h3>
 
               <form @submit.prevent="handleSave">
-                <!-- Avatar (Mock) -->
                 <div class="text-center mb-4">
                   <div class="d-inline-block position-relative">
                     <div class="bg-light rounded-circle d-flex align-items-center justify-content-center border" style="width: 100px; height: 100px;">
@@ -24,11 +23,11 @@
                   <div class="col-md-6">
                     <label class="form-label small fw-bold text-secondary">{{ t('login.username') || 'Username' }}</label>
                     <input type="text" class="form-control bg-light" v-model="form.username" disabled>
-                    <div class="form-text small">{{ t('profile.usernameDisabled') || 'Username cannot be changed' }}</div>
+                    <div class="form-text small">{{ t('member.usernameDisabled') || 'Username cannot be changed' }}</div>
                   </div>
 
                   <div class="col-md-6">
-                    <label class="form-label small fw-bold text-secondary">{{ t('profile.nickname') || 'Nickname' }}</label>
+                    <label class="form-label small fw-bold text-secondary">{{ t('member.nickname') || 'Nickname' }}</label>
                     <input type="text" class="form-control" v-model="form.nickname" required>
                   </div>
 
@@ -38,14 +37,14 @@
                   </div>
 
                   <div class="col-md-6">
-                    <label class="form-label small fw-bold text-secondary">{{ t('profile.mobile') || 'Mobile' }}</label>
+                    <label class="form-label small fw-bold text-secondary">{{ t('member.mobile') || 'Mobile' }}</label>
                     <input type="tel" class="form-control" v-model="form.mobile">
                   </div>
 
                   <div class="col-12 mt-4">
                     <button type="submit" class="btn btn-theme w-100 py-2 rounded-pill fw-bold" :disabled="loading">
                       <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
-                      {{ t('profile.save') || 'Save Changes' }}
+                      {{ t('member.saveProfile') || 'Save Changes' }}
                     </button>
                   </div>
                 </div>
@@ -90,7 +89,7 @@ const handleSave = async () => {
     // await updateProfile(form)
     await new Promise(resolve => setTimeout(resolve, 800))
     
-    swal(t('profile.success') || 'Profile updated successfully!', { icon: 'success' })
+    swal(t('member.profileSuccess') || 'Profile updated successfully!', { icon: 'success' })
   } catch (error) {
     swal(t('commonConfig.error') || 'Error', { icon: 'error' })
   } finally {

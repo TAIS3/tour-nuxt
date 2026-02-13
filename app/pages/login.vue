@@ -145,12 +145,23 @@ const handleLogin = async () => {
           }
 
           store.setToken(token);
+
+          // 【新增/修复】显式将 Token 写入 'fa-token' Cookie
+          // 这一步至关重要，否则 useApi 读取不到
+          const tokenCookie = useCookie('fa-token', { maxAge: 86400 * 30 }) // 30天有效期
+          tokenCookie.value = token
           
-          await store.fetchUser(); 
+          // 手动设置用户信息，确保状态同步
+          if (resData.data.userinfo) {
+            store.user = resData.data.userinfo
+          }
+          
+          // Redirect to member center after successful login
           swal(t('login.success') || 'Login successful!', { 
             icon: 'success' 
           }).then(() => {
-             router.push(localePath('/'));
+             // Use navigateTo for a client-side redirect
+             navigateTo(localePath('/member/member-center'));
           });
 
         } else {

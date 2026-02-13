@@ -9,6 +9,10 @@
 
 <script setup>
 // 注意：这里没有 lang="ts"，纯 JS 写法
+const mainStore = useMainStore();
+if (mainStore.token && !mainStore.user) {
+  await mainStore.fetchUser();
+}
 // 这里可以放一些全局初始化的逻辑，比如 SEO 配置
 useHead({
   titleTemplate: (titleChunk) => {

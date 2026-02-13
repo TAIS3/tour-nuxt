@@ -64,6 +64,7 @@
                     :placeholder="t('login.passwordPlaceholder') || 'Enter new password'"
                     required
                     minlength="6"
+                    maxlength="15"
                   >
                   <span 
                     class="input-group-text bg-white border-start-0 cursor-pointer text-muted"
@@ -71,6 +72,10 @@
                   >
                     <i class="bi" :class="showPassword ? 'bi-eye' : 'bi-eye-slash'"></i>
                   </span>
+                </div>
+                <div v-if="isPasswordInvalid" class="text-danger small mt-1 ps-1">
+                  <i class="bi bi-exclamation-circle me-1"></i>
+                  {{ t('register.passwordInvalid') || 'Password must be 6-15 characters and contain both letters and numbers.' }}
                 </div>
               </div>
 
@@ -103,7 +108,7 @@
               <button 
                 type="submit" 
                 class="btn btn-theme w-100 py-2 rounded-pill fw-bold"
-                :disabled="loading || passwordMismatch"
+                :disabled="loading || passwordMismatch || isPasswordInvalid"
               >
                 <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
                 {{ t('forgotPassword.submit') || 'Reset Password' }}
@@ -125,11 +130,13 @@
 
 <script setup>
 import swal from 'sweetalert'
+import { useValidators } from '~/composables/useValidators'
 
 const { t } = useI18n()
 const localePath = useLocalePath()
 const router = useRouter()
 const { sendCode, resetPassword } = useApi() // 需在 useApi.js 增加 resetPassword
+const { isValidPassword } = useValidators()
 
 const form = reactive({
   email: '',
@@ -147,6 +154,8 @@ let timer = null
 
 const isEmailValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
 const passwordMismatch = computed(() => form.confirmPassword && form.newPassword !== form.confirmPassword)
+const isPasswordInvalid = computed(() => form.newPassword && !isValidPassword(form.newPassword))
+
 
 // 发送验证码 (事件类型 resetpwd)
 const handleSendCode = async () => {
@@ -189,6 +198,10 @@ const startCountdown = () => {
 const handleReset = async () => {
   if (!form.email || !form.code || !form.newPassword) {
     swal(t('login.errorFill'), { icon: 'error' })
+    return
+  }
+  if (isPasswordInvalid.value) {
+    swal(t('member.passwordInvalid') || 'Password must be 6-15 characters and contain both letters and numbers.', { icon: 'error' })
     return
   }
   if (passwordMismatch.value) return

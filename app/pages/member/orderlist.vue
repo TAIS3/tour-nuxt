@@ -1,9 +1,8 @@
 <template>
-  <div class="order-page py-5">
+  <div class="order-page member-page">
     <div class="container">
-      <h3 class="fw-bold mb-4">{{ t('order.title') || 'My Orders' }}</h3>
+      <h3 class="fw-bold mb-4">{{ t('member.orderTitle') || 'My Orders' }}</h3>
       
-      <!-- Tabs -->
       <ul class="nav nav-pills mb-4 gap-2">
         <li class="nav-item" v-for="tab in tabs" :key="tab.value">
           <a 
@@ -16,27 +15,24 @@
         </li>
       </ul>
 
-      <!-- Loading -->
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-theme" role="status"></div>
       </div>
 
-      <!-- Empty State -->
       <div v-else-if="!orders.length" class="text-center py-5 bg-white rounded shadow-sm">
         <i class="bi bi-inbox display-1 text-muted opacity-25"></i>
-        <p class="mt-3 text-muted">{{ t('order.noOrders') || 'No orders found' }}</p>
+        <p class="mt-3 text-muted">{{ t('member.orderNoOrders') || 'No orders found' }}</p>
         <NuxtLink :to="localePath('/')" class="btn btn-theme mt-2 rounded-pill px-4">
           {{ t('commonConfig.home') || 'Go Shopping' }}
         </NuxtLink>
       </div>
 
-      <!-- Order List -->
       <div v-else class="row">
         <div class="col-12 mb-3" v-for="order in orders" :key="order.id">
           <div class="card shadow-sm border-0 overflow-hidden">
             <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-bottom-0">
               <div>
-                <span class="fw-bold me-3 text-dark">{{ t('order.orderNo') }}: {{ order.order_no }}</span>
+                <span class="fw-bold me-3 text-dark">{{ t('member.orderNo') }}: {{ order.order_no }}</span>
                 <span class="text-muted small"><i class="bi bi-clock me-1"></i>{{ order.createtime }}</span>
               </div>
               <span class="badge rounded-pill px-3 py-2" :class="getStatusClass(order.status)">
@@ -44,7 +40,6 @@
               </span>
             </div>
             <div class="card-body bg-light bg-opacity-10">
-              <!-- Mock Items Loop -->
               <div class="d-flex align-items-center mb-3 bg-white p-3 rounded border" v-for="(item, idx) in order.items || []" :key="idx">
                 <div class="flex-shrink-0 bg-light rounded d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
                    <i class="bi bi-image text-muted"></i>
@@ -60,14 +55,14 @@
               
               <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
                 <div class="fw-bold fs-5">
-                  {{ t('order.total') }}: <span class="theme-text">${{ order.amount }}</span>
+                  {{ t('member.orderTotal') }}: <span class="theme-text">${{ order.amount }}</span>
                 </div>
                 <div>
                   <button v-if="order.status === '0'" class="btn btn-theme btn-sm rounded-pill px-4 fw-bold">
-                    {{ t('order.pay') || 'Pay Now' }}
+                    {{ t('member.payNow') || 'Pay Now' }}
                   </button>
                   <button class="btn btn-outline-secondary btn-sm rounded-pill px-4 ms-2">
-                    {{ t('order.view') || 'Details' }}
+                    {{ t('member.viewDetails') || 'Details' }}
                   </button>
                 </div>
               </div>
@@ -90,10 +85,10 @@ const loading = ref(false)
 const orders = ref([])
 
 const tabs = computed(() => [
-  { label: t('order.tabAll') || 'All Orders', value: 'all' },
-  { label: t('order.tabUnpaid') || 'Unpaid', value: 'unpaid' },
-  { label: t('order.tabPaid') || 'Paid', value: 'paid' },
-  { label: t('order.tabCompleted') || 'Completed', value: 'completed' }
+  { label: t('member.orderTabAll') || 'All Orders', value: 'all' },
+  { label: t('member.orderTabUnpaid') || 'Unpaid', value: 'unpaid' },
+  { label: t('member.orderTabPaid') || 'Paid', value: 'paid' },
+  { label: t('member.orderTabCompleted') || 'Completed', value: 'completed' }
 ])
 
 const fetchOrders = async () => {
@@ -129,9 +124,9 @@ const handleTabChange = (val) => {
 
 const getStatusText = (status) => {
   const map = {
-    '0': t('order.statusUnpaid') || 'Unpaid',
-    '1': t('order.statusPaid') || 'Paid',
-    '2': t('order.statusCompleted') || 'Completed'
+    '0': t('member.statusUnpaid') || 'Unpaid',
+    '1': t('member.statusPaid') || 'Paid',
+    '2': t('member.statusCompleted') || 'Completed'
   }
   return map[status] || status
 }

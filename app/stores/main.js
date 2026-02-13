@@ -11,7 +11,7 @@ export const useMainStore = defineStore('main', () => {
     const token = useCookie('fa-token')
     const user = ref(null)
 
-    const isLoggedIn = computed(() => !!user.value)
+    const isLoggedIn = computed(() => !!token.value)
 
     // Actions
     function setToken(newToken) {
