@@ -39,7 +39,7 @@ import { useRoute } from 'vue-router';
 import CommonPageBanner from '~/app/components/CommonPageBanner.vue';
 import LoadingComponent from '~/app/components/LoadingComponent.vue';
 import NoData from '~/app/components/NoData.vue';
-import { useHttp } from '~/app/composables/useHttp';
+// import { useHttp } from '~/app/composables/useHttp';
 
 definePageMeta({
   middleware: 'auth',
