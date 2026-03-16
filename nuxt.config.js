@@ -87,4 +87,11 @@ export default defineNuxtConfig({
     }
   },
   // ssr: false,
+
+  // paypal配置
+  vue: {
+    compilerOptions: {
+      isCustomElement: (tag) => tag.includes('paypal-') || tag.includes('venmo-')
+    }
+  }
 })

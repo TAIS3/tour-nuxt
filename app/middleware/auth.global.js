@@ -13,9 +13,15 @@ export default defineNuxtRouteMiddleware((to, from) => {
     return navigateTo(localePath('/member/member-center'));
   }
 
-  // Check if the user is trying to access a member page without being logged in
-  if (!mainStore.isLoggedIn && to.path.startsWith('/member')) {
-    // Redirect them to the login page using a localized path
+  // Whitelist of public paths under /member that don't require authentication
+  const publicMemberPaths = [
+    '/member/forgot-password',
+    // You can add other public paths here in the future
+  ].map(path => localePath(path));
+
+  // Check if the user is trying to access a protected member page without being logged in
+  if (!mainStore.isLoggedIn && to.path.startsWith('/member') && !publicMemberPaths.includes(to.path)) {
+    // Redirect them to the login page
     return navigateTo(localePath('/login'));
   }
 });
