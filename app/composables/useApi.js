@@ -237,5 +237,37 @@ export const useApi = () => {
         body: payload, // { oldpassword, newpassword }
       });
     },
+
+    // 23. 创建旅游路线订单 (修复了原有的方法名，匹配后端 create_order)
+    createTourOrder: (payload) => {
+      return request('/api/xilutour.tour_order/create_order', {
+        method: 'POST',
+        body: payload
+      });
+    },
+
+    // 24. 创建景点订单 (修复了原有的方法名，匹配后端 create_order)
+    createSceneryOrder: (payload) => {
+      return request('/api/xilutour.scenery_order/create_order', {
+        method: 'POST',
+        body: payload
+      });
+    },
+
+    // 25. 新增：向 PayPal 申请预支付单号 (指向刚合并的 Pay 控制器)
+    createPaypalOrder: (payload) => {
+      return request('/api/xilutour.pay/create_paypal_order', {
+        method: 'POST',
+        body: payload // { order_id, type }
+      });
+    },
+
+    // 26. 新增：捕获 PayPal 扣款并更新本地状态
+    capturePaypalOrder: (payload) => {
+      return request('/api/xilutour.pay/capture_paypal_order', {
+        method: 'POST',
+        body: payload // { paypalOrderId, order_id, type }
+      });
+    }
   }
 }

@@ -4,9 +4,9 @@
       <div class="col-md-8 col-lg-6">
         <div class="card shadow">
           <div class="card-body p-4 text-center">
-            <h3 class="card-title fw-bold mb-3">{{ t('pay.title') || 'Complete Your Payment' }}</h3>
+            <h3 class="card-title fw-bold mb-3">{{ t('member.paytitle') || 'Complete Your Payment' }}</h3>
             <p class="text-muted mb-4" v-if="orderId">
-              {{ t('pay.orderNumber') || 'Order Number' }}: {{ orderId }}
+              {{ t('member.payorderNumber') || 'Order Number' }}: {{ orderId }}
             </p>
 
             <!-- Loading Spinner -->
@@ -14,7 +14,7 @@
               <div class="spinner-border" role="status">
                 <span class="visually-hidden">Loading...</span>
               </div>
-              <p class="ms-2 mb-0">{{ t('pay.loading') || 'Loading Payment Gateway...' }}</p>
+              <p class="ms-2 mb-0">{{ t('member.payloading') || 'Loading Payment Gateway...' }}</p>
             </div>
 
             <!-- PayPal Button Container -->
@@ -32,62 +32,41 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeMount } from 'vue';
-import swal from 'sweetalert'
+import { ref, onMounted, onBeforeMount, computed } from 'vue';
+import swal from 'sweetalert';
 
-// --- CONFIGURATION ---
-// IMPORTANT: Replace with your actual PayPal Client ID from your developer dashboard
+// --- 配置你的 PayPal Sandbox / Live Client ID ---
 const PAYPAL_CLIENT_ID = "ATAhdZ6LUCDh6MWBv-elnv4ZfEsNI2M7jSr-_yI91sUp97CeJHgapZLG62AekzvOt5Stsh76ZoGZ8-DV";
-// --------------------
 
-// Composables
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const localePath = useLocalePath();
-// Assuming you have these API functions defined in your useApi composable
 const { createPaypalOrder, capturePaypalOrder } = useApi(); 
 
-// Component State
+// 组件状态
 const loading = ref(true);
 const error = ref(null);
-const orderId = ref(null); // The internal order ID from your system (e.g., from FastAdmin)
-const orderDetails = ref({ // This should be fetched from your API based on orderId
+const order_id = ref(null);   // 改为 order_id
+const order_type = ref(null); // 新增 order_type 接收路线或景点类型
+const orderDetails = ref({
   currency_code: 'USD',
-  value: '100.00' // Example value. Fetch the real amount from your backend.
+  value: '0.00' 
 });
 
-// onBeforeMount is executed on server and client.
-// We get the orderId here to prepare for fetching data.
 onBeforeMount(() => {
-  // Get order ID from route query parameters, e.g., /member/pay?orderId=123
-  if (route.query.orderId) {
-    orderId.value = route.query.orderId;
-    // --- TODO: Fetch Order Details ---
-    // In a real app, you should fetch the order details from your backend here.
-    // This is to get the correct amount and currency for the transaction.
-    // Example:
-    // const { data: fetchedOrder, error: fetchError } = await useApi().getOrderDetails(orderId.value);
-    // if (fetchError.value) {
-    //   error.value = "无法获取订单详情。";
-    // } else {
-    //   orderDetails.value.value = fetchedOrder.value.amount;
-    //   orderDetails.value.currency_code = fetchedOrder.value.currency;
-    // }
-    // ---------------------------------
+  // 从 URL 中严格接收 order_id 和 type
+  if (route.query.order_id && route.query.type) {
+    order_id.value = route.query.order_id;
+    order_type.value = route.query.type;
   } else {
-    error.value = t('pay.errorOrderMissing') || "Order information is missing. Payment cannot proceed.";
+    error.value = t('member.payerrorOrderMissing') || "Order information is missing. Payment cannot proceed.";
     loading.value = false;
   }
 });
 
-// onMounted is executed only on the client-side.
-// We load the PayPal script here because it interacts with the window object.
 onMounted(() => {
-  if (!orderId.value) {
-    // Stop if there's no orderId
-    return;
-  }
+  if (!order_id.value) return;
   loadPayPalSDK();
 });
 
@@ -102,7 +81,7 @@ function loadPayPalSDK() {
   };
   
   script.onerror = () => {
-    error.value = t('pay.errorSdkLoad') || "Failed to load PayPal payment component. Please refresh the page or contact support.";
+    error.value = t('member.payerrorSdkLoad') || "Failed to load PayPal payment component. Please refresh the page or contact support.";
     loading.value = false;
   };
 
@@ -110,9 +89,8 @@ function loadPayPalSDK() {
 }
 
 function renderPayPalButtons() {
-  // Ensure the SDK is loaded and we have a container.
   if (!window.paypal || !document.getElementById('paypal-button-container')) {
-    error.value = t('pay.errorSdkRender') || "Failed to initialize PayPal buttons. Please try again.";
+    error.value = t('member.payerrorSdkRender') || "Failed to initialize PayPal buttons. Please try again.";
     loading.value = false;
     return;
   }
@@ -120,88 +98,85 @@ function renderPayPalButtons() {
   loading.value = false;
 
   window.paypal.Buttons({
-    // 1. createOrder: Called when the user clicks the PayPal button.
+    // 1. 唤起弹窗前：向 FastAdmin 请求创建 PayPal 订单
     createOrder: async () => {
       try {
         error.value = null;
-        // Call your backend to set up the transaction.
-        // The backend must call PayPal's Orders API and return the PayPal order ID.
         const { data: response, error: apiError } = await createPaypalOrder({
-            orderId: orderId.value, // Pass your internal order ID to the backend
-            // You might need to pass amount and currency if your backend doesn't fetch it itself
+            order_id: order_id.value,   // 传本地订单ID
+            type: order_type.value      // 传订单类型 (tour_order / scenery_order)
         });
 
         if (apiError.value || response.value.code !== 1) {
             throw new Error(apiError.value?.data?.message || response.value?.msg || 'Could not create payment order.');
         }
 
-        const paypalOrderID = response.value.data.paypalOrderId; // Adjust based on your API response
-        console.log(`Backend created PayPal order: ${paypalOrderID}`);
+        // 后端返回的 JSON 是 ['paypalOrderId' => $result['id']]
+        const paypalOrderID = response.value.data.paypalOrderId; 
         return paypalOrderID;
 
       } catch (err) {
-        error.value = `${t('pay.errorCreate') || 'Failed to create payment'}: ${err.message}`;
-        return null; // Must return null or a rejected promise to stop the payment flow
+        error.value = `${t('member.payerrorCreate') || 'Failed to create payment'}: ${err.message}`;
+        return null; 
       }
     },
 
-    // 2. onApprove: Called after the user approves the payment in the PayPal popup.
+    // 2. 弹窗同意后：向 FastAdmin 请求捕获扣款
     onApprove: async (data) => {
       try {
         loading.value = true;
         error.value = null;
 
-        // Call your backend to capture the payment.
-        // The backend must call PayPal's Orders API to finalize the transaction.
         const { data: response, error: apiError } = await capturePaypalOrder({
-            paypalOrderId: data.orderID
+            paypalOrderId: data.orderID, // PayPal 返回的流水号
+            order_id: order_id.value,    // 本地订单ID
+            type: order_type.value       // 订单类型
         });
 
         if (apiError.value || response.value.code !== 1) {
             throw new Error(apiError.value?.data?.message || response.value?.msg || 'Payment verification failed.');
         }
 
-        console.log("Backend successfully captured the payment.");
-        swal(t('pay.successTitle') || "Payment Successful!", t('pay.successMsg') || "Your order has been paid.", "success").then(() => {
-            router.push(localePath({ name: 'orderdetail-id', params: { id: orderId.value }}));
+        swal(t('member.paysuccessTitle') || "Payment Successful!", t('member.paysuccessMsg') || "Your order has been paid.", "success").then(() => {
+            // 支付成功后跳转回订单详情
+            router.push(localePath({ name: 'orderdetail-id', params: { id: order_id.value }}));
         });
         
       } catch (err) {
-        error.value = `${t('pay.errorProcess') || 'Failed to process payment'}: ${err.message}`;
-        swal(t('pay.errorTitle') || "Payment Failed", err.message, "error");
+        error.value = `${t('member.payerrorProcess') || 'Failed to process payment'}: ${err.message}`;
+        swal(t('member.payerrorTitle') || "Payment Failed", err.message, "error");
         loading.value = false;
       }
     },
 
-    // 3. onError: Handle errors from the PayPal button/modal itself.
     onError: (err) => {
-      console.error("PayPal button or modal error:", err);
-      error.value = t('pay.errorUnexpected') || "An unexpected error occurred during the payment process. Please try again.";
+      console.error("PayPal button error:", err);
+      error.value = t('member.payerrorUnexpected') || "An unexpected error occurred during the payment process. Please try again.";
     },
 
-    // 4. onCancel: Handle the case where the user closes the PayPal popup.
     onCancel: (data) => {
-        console.log("User cancelled the payment.", data);
-        swal(t('pay.cancelTitle') || "Payment Cancelled", t('pay.cancelMsg') || "You have closed the payment window.", "info");
+        swal(t('member.paycancelTitle') || "Payment Cancelled", t('member.paycancelMsg') || "You have closed the payment window.", "info");
     }
 
   }).render('#paypal-button-container').catch(err => {
-      console.error("Failed to render PayPal buttons:", err);
-      error.value = t('pay.errorRender') || "Could not display PayPal buttons. Please check the configuration.";
+      error.value = t('member.payerrorRender') || "Could not display PayPal buttons. Please check the configuration.";
       loading.value = false;
   });
 }
 
 useHead({
-  title: computed(() => t('pay.pageTitle') || 'Complete Payment')
+  title: computed(() => t('member.paypageTitle') || 'Complete Payment')
 })
 </script>
 
 <style scoped>
 .payment-section {
-  background-color: #f8f9fa;
+  /* background-color: #f8f9fa; */
   min-height: 80vh;
   display: flex;
   align-items: center;
+}
+.payment-section .row{
+  width: 100%
 }
 </style>
