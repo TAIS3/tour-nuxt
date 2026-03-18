@@ -231,11 +231,7 @@
                       {{ t('commonConfig.myOrders') }}
                     </NuxtLink>
                   </li>
-                  <li>
-                    <NuxtLink class="dropdown-item rounded" :to="localePath('/member/cart')">
-                      {{ t('commonConfig.cart') }}
-                    </NuxtLink>
-                  </li>
+                 
                   <li>
                     <NuxtLink class="dropdown-item rounded" :to="localePath('/member/member-center')">
                       {{ t('commonConfig.memberCenter') }}

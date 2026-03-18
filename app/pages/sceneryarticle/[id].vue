@@ -107,7 +107,7 @@
                     <div class="price text-danger">
                       <small>¥</small><span class="num">{{ parseFloat(item.salesprice) }}</span>
                     </div>
-                    <button class="btn-book-sm" @click="addToCart(item)">{{ t('commonConfig.book') }}</button>
+                    <button class="btn-book-sm" @click="handleCheckout(item)">{{ t('commonConfig.buyNow', '立即购买') }}</button>
                   </div>
                 </div>
               </div>
@@ -134,36 +134,7 @@
              </div>
           </div>
 
-          <div class="sidebar-card mb-4 sticky-action">
-            <h5 class="card-title mb-3">{{ t('commonConfig.cart') }}</h5>
-            
-            <div class="mini-cart mb-3" v-if="cart.length > 0">
-              <div v-for="(cItem, idx) in cart" :key="idx" class="d-flex justify-content-between mb-2 small">
-                <span>{{ cItem.name }}</span>
-                <span class="text-danger">¥{{ cItem.salesprice }}</span>
-              </div>
-              <div class="border-top pt-2 fw-bold d-flex justify-content-between">
-                <span>{{ t('commonConfig.totalPrice') }}:</span>
-                <span class="text-danger">¥{{ cartTotal }}</span>
-              </div>
-            </div>
-            <div v-else class="text-muted small mb-3 text-center bg-light p-2 rounded">
-              {{ t('commonConfig.chooseProject') }}
-            </div>
 
-            <div class="d-grid gap-2">
-              <button class="btn btn-theme fw-bold">{{ t('commonConfig.buyNow') }}</button>
-              <div class="d-flex gap-2">
-                <button class="btn btn-outline-secondary flex-grow-1" @click="toggleCollect">
-                  <i class="iconfont" :class="isCollected ? 'icon-star-fill text-warning' : 'icon-star'"></i> 
-                  {{ isCollected ? 'Collected' : 'To Collect' }}
-                </button>
-                <button class="btn btn-outline-secondary flex-grow-1">
-                  <i class="iconfont icon-service"></i> {{ t('commonConfig.contactOnline') }}
-                </button>
-              </div>
-            </div>
-          </div>
 
           <div class="sidebar-card">
             <div class="sidebar-header mb-3">
@@ -204,15 +175,7 @@
           <i class="iconfont icon-service"></i>
           <span>{{ t('commonConfig.contactOnline') }}</span>
         </div>
-        <div class="icon-btn position-relative">
-          <i class="iconfont icon-cart"></i>
-          <span>{{ t('commonConfig.cart') }}</span>
-          <span v-if="cart.length" class="badge rounded-pill bg-danger position-absolute top-0 start-100 translate-middle-x" style="font-size: 10px;">{{ cart.length }}</span>
-        </div>
       </div>
-      <button class="btn btn-theme flex-grow-1 ms-3 rounded-pill fw-bold">
-        ¥{{ cartTotal }} {{ t('commonConfig.buyNow') }}
-      </button>
     </div>
 
     <CommonPageBanner />
@@ -221,6 +184,7 @@
 </template>
 
 <script setup>
+import swal from 'sweetalert';
 // 【核心修改】不要在顶层 import AMapLoader
 // import AMapLoader from '@amap/amap-jsapi-loader'; // <--- 已删除
 import { onUnmounted, shallowRef, onMounted } from 'vue';
@@ -228,11 +192,10 @@ import { onUnmounted, shallowRef, onMounted } from 'vue';
 const route = useRoute()
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
-const { getSceneryDetail, getSceneryRecommend } = useApi()
+const { getSceneryDetail, getSceneryRecommend, createSceneryOrder } = useApi()
 
 const sceneryId = computed(() => route.params.id)
 const currentTab = ref('projects')
-const cart = ref([])
 const isCollected = ref(false)
 
 // 地图实例
@@ -249,12 +212,50 @@ const bannerStyle = computed(() => {
   }
 })
 
-const cartTotal = computed(() => {
-  return cart.value.reduce((sum, item) => sum + parseFloat(item.salesprice), 0).toFixed(2)
-})
+const handleCheckout = async (item) => {
+  // 检查是否登录
+  const token = useCookie('fa-token').value
+  if (!token) {
+    swal({
+      title: t('common.loginRequiredTitle', '需要登录'),
+      text: t('common.loginRequiredText', '请先登录再进行购买。'),
+      icon: 'warning',
+      buttons: {
+        cancel: t('common.cancel', '取消'),
+        confirm: {
+          text: t('common.goToLogin', '去登录'),
+          value: true,
+        },
+      },
+    }).then((willRedirect) => {
+      if (willRedirect) {
+        navigateTo(localePath(`/login?redirect=${route.fullPath}`))
+      }
+    })
+    return
+  }
+  
+  try {
+    const { data: orderResult, error } = await createSceneryOrder({
+      project_id: item.id,
+      number: 1
+    })
 
-const addToCart = (item) => {
-  cart.value.push(item)
+    if (error.value || orderResult.value?.code !== 1) {
+      throw new Error(orderResult.value?.msg || error.value?.data?.message || t('member.checkoutError', '创建订单失败'))
+    }
+
+    const order_id = orderResult.value.data.order_id
+    await navigateTo(localePath({
+      path: '/member/pay',
+      query: { 
+        order_id: order_id, 
+        type: 'scenery_order'
+      }
+    }))
+  } catch (err) {
+    swal({ title: t('commonConfig.error', '错误'), text: err.message, icon: 'error' })
+  }
 }
 
 const toggleCollect = () => {
@@ -512,7 +513,7 @@ $bg-page: #f5f7fa;
 .map-square {
   width: 100%;
   // aspect-ratio: 1/1 是现代浏览器实现正方形最简单的方法
-  aspect-ratio: 1 / 1; 
+  //aspect-ratio: 1 / 1; 
   position: relative;
   
   #amap-container {

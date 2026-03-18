@@ -55,7 +55,9 @@
                   </span>
                 </div>
               </div>
-              <button class="btn theme-btn" type="button">Book Now</button>
+              <button class="btn theme-btn" type="button" @click="handleCheckout">
+                {{ t('tourArticle.buyNow', '立即购买') }}
+              </button>
             </div>
 
             <h2 class="h4 mb-3">{{ t('tourArticle.travelHighlights') }}</h2>
@@ -109,11 +111,13 @@
 </template>
 
 <script setup>
+import swal from 'sweetalert'
+
 // 1. 自动导入
 // safeContent, getImageUrl 应在 utils/common.js 中定义并自动导入
 const route = useRoute()
 const { t, locale } = useI18n()
-const { getTourDetail, getTourRecommend } = useApi()
+const { getTourDetail, getTourRecommend, createTourOrder } = useApi()
 
 // 这个工具会自动处理 '/tourarticle/123' -> '/en/tourarticle/123' (取决于当前语言)
 const localePath = useLocalePath()
@@ -131,6 +135,55 @@ const bannerStyle = computed(() => {
     marginBottom: '0'
   }
 })
+
+// 新增：处理直接结算
+const handleCheckout = async () => {
+  if (!tour.value || !tour.value.id) return;
+
+  // 1. 检查是否登录
+  const token = useCookie('fa-token').value;
+  if (!token) {
+    swal({
+      title: t('common.loginRequiredTitle', '需要登录'),
+      text: t('common.loginRequiredText', '请先登录再进行购买。'),
+      icon: 'warning',
+      buttons: {
+        cancel: t('common.cancel', '取消'),
+        confirm: { text: t('common.goToLogin', '去登录'), value: true },
+      },
+    }).then((willRedirect) => {
+      if (willRedirect) {
+        navigateTo(localePath(`/login?redirect=${route.fullPath}`));
+      }
+    });
+    return;
+  }
+
+  // 2. 创建订单
+  try {
+    const { data: orderResult, error } = await createTourOrder({
+      tour_id: tour.value.id,
+      number: 1, // 直接购买，数量为1
+    });
+
+    if (error.value || orderResult.value?.code !== 1) {
+      throw new Error(orderResult.value?.msg || error.value?.data?.message || t('member.checkoutError', '创建订单失败'));
+    }
+
+    // 3. 导航到支付页面
+    const order_id = orderResult.value.data.order_id;
+    await navigateTo(localePath({
+      path: '/member/pay',
+      query: { 
+        order_id: order_id, 
+        type: 'tour_order'
+      }
+    }));
+
+  } catch (err) {
+    swal({ title: t('commonConfig.error', '错误'), text: err.message, icon: 'error' });
+  }
+}
 
 // ----------------------------------------------------------------
 // 3. 并行获取数据 (SSR核心)
