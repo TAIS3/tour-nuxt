@@ -26,11 +26,10 @@ export const useApi = () => {
     // 4. 设置 Header
     const headers = {
       ...options.headers,
-      token: rawToken // 此时这里一定有值
+      token: rawToken 
     }
 
-    // 5. 语言参数处理 (安全获取)
-    // 注意：这里加了 ?. 防止 i18n 未初始化导致的报错
+    // 5. 语言参数处理
     const currentLang = nuxtApp.$i18n?.locale?.value || 'zh-cn'
 
     if (!options.method || options.method.toUpperCase() === 'GET') {
@@ -45,16 +44,25 @@ export const useApi = () => {
 
     const baseURL = config.public?.apiBase || ''
 
-    return await useFetch(url, {
-      baseURL,
-      headers,
-      ...options,
-      onResponse({ response }) {
-        if (response._data?.code === 401) {
-           tokenCookie.value = null
+    // 核心修改：使用 $fetch 替代 useFetch，解决 mounted 后的请求警告
+    try {
+      const response = await $fetch(url, {
+        baseURL,
+        headers,
+        ...options,
+        onResponse({ response }) {
+          if (response._data?.code === 401) {
+             tokenCookie.value = null
+          }
         }
-      }
-    })
+      })
+      // 模拟 useFetch 的成功返回结构，不影响其他组件的解构代码
+      return { data: ref(response), error: ref(null) }
+      
+    } catch (err) {
+      // 模拟 useFetch 的失败返回结构
+      return { data: ref(null), error: ref(err) }
+    }
   }
 
   return {

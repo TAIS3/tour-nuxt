@@ -238,6 +238,7 @@ const handleCheckout = async (item) => {
   try {
     const { data: orderResult, error } = await createSceneryOrder({
       project_id: item.id,
+      scenery_id: parseFloat(sceneryId.value),
       number: 1
     })
 
@@ -513,7 +514,7 @@ $bg-page: #f5f7fa;
 .map-square {
   width: 100%;
   // aspect-ratio: 1/1 是现代浏览器实现正方形最简单的方法
-  //aspect-ratio: 1 / 1; 
+  aspect-ratio: 1 / 1; 
   position: relative;
   
   #amap-container {

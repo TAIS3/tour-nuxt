@@ -5,8 +5,8 @@
         <div class="card shadow">
           <div class="card-body p-4 text-center">
             <h3 class="card-title fw-bold mb-3">{{ t('member.paytitle') || 'Complete Your Payment' }}</h3>
-            <p class="text-muted mb-4" v-if="orderId">
-              {{ t('member.payorderNumber') || 'Order Number' }}: {{ orderId }}
+            <p class="text-muted mb-4" v-if="order_id">
+              {{ t('member.payorderNumber') || 'Order Number' }}: {{ order_id }}
             </p>
 
             <!-- Loading Spinner -->
@@ -32,7 +32,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeMount, computed } from 'vue';
+import { ref, onMounted, computed } from 'vue'; // 移除了 onBeforeMount
 import swal from 'sweetalert';
 
 // --- 配置你的 PayPal Sandbox / Live Client ID ---
@@ -45,29 +45,27 @@ const localePath = useLocalePath();
 const { createPaypalOrder, capturePaypalOrder } = useApi(); 
 
 // 组件状态
-const loading = ref(true);
+const loading = ref(true); // 初始值保持为 true，确保和服务器端渲染一致
 const error = ref(null);
-const order_id = ref(null);   // 改为 order_id
-const order_type = ref(null); // 新增 order_type 接收路线或景点类型
+const order_id = ref(null);   
+const order_type = ref(null); 
 const orderDetails = ref({
   currency_code: 'USD',
   value: '0.00' 
 });
 
-onBeforeMount(() => {
-  // 从 URL 中严格接收 order_id 和 type
+onMounted(() => {
+  // 1. 将原本 onBeforeMount 的逻辑移到这里。这里已经安全完成了水合。
   if (route.query.order_id && route.query.type) {
     order_id.value = route.query.order_id;
     order_type.value = route.query.type;
+    
+    // 2. 拿到参数后，立刻开始加载 SDK
+    loadPayPalSDK();
   } else {
     error.value = t('member.payerrorOrderMissing') || "Order information is missing. Payment cannot proceed.";
     loading.value = false;
   }
-});
-
-onMounted(() => {
-  if (!order_id.value) return;
-  loadPayPalSDK();
 });
 
 function loadPayPalSDK() {
@@ -95,25 +93,23 @@ function renderPayPalButtons() {
     return;
   }
 
+  // 此时 SDK 加载完毕，才关掉 loading 动画
   loading.value = false;
 
   window.paypal.Buttons({
-    // 1. 唤起弹窗前：向 FastAdmin 请求创建 PayPal 订单
     createOrder: async () => {
       try {
         error.value = null;
         const { data: response, error: apiError } = await createPaypalOrder({
-            order_id: order_id.value,   // 传本地订单ID
-            type: order_type.value      // 传订单类型 (tour_order / scenery_order)
+            order_id: order_id.value,   
+            type: order_type.value      
         });
 
         if (apiError.value || response.value.code !== 1) {
             throw new Error(apiError.value?.data?.message || response.value?.msg || 'Could not create payment order.');
         }
 
-        // 后端返回的 JSON 是 ['paypalOrderId' => $result['id']]
-        const paypalOrderID = response.value.data.paypalOrderId; 
-        return paypalOrderID;
+        return response.value.data.paypalOrderId; 
 
       } catch (err) {
         error.value = `${t('member.payerrorCreate') || 'Failed to create payment'}: ${err.message}`;
@@ -121,16 +117,15 @@ function renderPayPalButtons() {
       }
     },
 
-    // 2. 弹窗同意后：向 FastAdmin 请求捕获扣款
     onApprove: async (data) => {
       try {
         loading.value = true;
         error.value = null;
 
         const { data: response, error: apiError } = await capturePaypalOrder({
-            paypalOrderId: data.orderID, // PayPal 返回的流水号
-            order_id: order_id.value,    // 本地订单ID
-            type: order_type.value       // 订单类型
+            paypalOrderId: data.orderID, 
+            order_id: order_id.value,    
+            type: order_type.value       
         });
 
         if (apiError.value || response.value.code !== 1) {
@@ -138,7 +133,6 @@ function renderPayPalButtons() {
         }
 
         swal(t('member.paysuccessTitle') || "Payment Successful!", t('member.paysuccessMsg') || "Your order has been paid.", "success").then(() => {
-            // 支付成功后跳转回订单详情
             router.push(localePath({ name: 'orderdetail-id', params: { id: order_id.value }}));
         });
         

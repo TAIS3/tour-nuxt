@@ -93,5 +93,10 @@ export default defineNuxtConfig({
     compilerOptions: {
       isCustomElement: (tag) => tag.includes('paypal-') || tag.includes('venmo-')
     }
-  }
+  },
+  postcss: {
+    plugins: {
+      autoprefixer: {},
+    },
+  },
 })
