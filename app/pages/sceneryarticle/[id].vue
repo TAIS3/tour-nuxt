@@ -246,7 +246,8 @@ const handleCheckout = async (item) => {
       throw new Error(orderResult.value?.msg || error.value?.data?.message || t('member.checkoutError', '创建订单失败'))
     }
 
-    const order_id = orderResult.value.data.order_id
+    const order_id = orderResult.value.data.order_no
+
     await navigateTo(localePath({
       path: '/member/pay',
       query: { 
