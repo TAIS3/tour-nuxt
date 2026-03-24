@@ -276,6 +276,52 @@ export const useApi = () => {
         method: 'POST',
         body: payload // { paypalOrderId, order_id, type }
       });
-    }
+    },
+
+    // 27. 新增：根据类型获取订单详情
+    getOrderDetail: (payload) => {
+      const endpoint = payload.type === 'tour_order'
+        ? '/api/xilutour.tour_order/detail'
+        : '/api/xilutour.scenery_order/detail';
+      
+      return request(endpoint, {
+        method: 'POST',
+        body: { order_id: payload.order_id }
+      });
+    },
+
+    // 28. 新增：获取订单列表
+    getOrderList: (payload) => {
+      // 这里的 payload.type 最好和后端保持统一，用 'tour_order' 或 'scenery_order'
+      const endpoint = payload.type === 'tour_order' 
+        ? '/api/xilutour.tour_order/lists'
+        : '/api/xilutour.scenery_order/lists';
+
+      return request(endpoint, {
+        method: 'POST',
+        body: {
+          // ThinkPHP 的 paginate 会自动去 request 里找 page 字段
+          page: payload.page || 1, 
+          // 将前端习惯的 limit 映射为后端需要的 pagesize
+          pagesize: payload.limit || 10, 
+          // 订单状态 (999=全部, 0=未支付, 1=已支付等，具体看你后端的 orderWhere 方法怎么写的)
+          state: payload.state ?? 999 
+        }
+      });
+    },
+
+    // 29. 新增：申请退款
+    applyRefund: (payload) => {
+      // 动态判断是路线订单还是景点订单
+      const endpoint = payload.type === 'tour_order'
+        ? '/api/xilutour.tour_order/refund'
+        : '/api/xilutour.scenery_order/refund';
+
+      return request(endpoint, {
+        method: 'POST',
+        // 注意：前端传过来的 payload.order_id 实际上装的是 order_no (如 B2026...)
+        body: { order_no: payload.order_id } 
+      });
+    },
   }
 }

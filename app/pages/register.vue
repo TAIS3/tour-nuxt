@@ -267,7 +267,7 @@ const handleRegister = async () => {
       // 统一处理：注册成功后，提示用户并跳转到登录页
       swal(t('register.successLogin') || 'Registration successful! Please login.', { 
         icon: 'success',
-        button: t('common.confirm') || "OK",
+        button: t('commonConfig.confirm') || "OK",
       }).then(() => {
         router.push(localePath('/login'))
       })

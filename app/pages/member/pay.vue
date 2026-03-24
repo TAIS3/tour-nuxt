@@ -132,8 +132,25 @@ function renderPayPalButtons() {
             throw new Error(apiError.value?.data?.message || response.value?.msg || 'Payment verification failed.');
         }
 
-        swal(t('member.paysuccessTitle') || "Payment Successful!", t('member.paysuccessMsg') || "Your order has been paid.", "success").then(() => {
-            router.push(localePath({ name: 'orderdetail-id', params: { id: order_id.value }}));
+        // 👇 核心修正：拿到真实的数据库主键 ID
+        const realDbId = response.value.data.id;
+
+        swal(t('member.paysuccessTitle') || "Payment Successful!", t('member.paysuccessMsg') || "Your order has been paid.", "success").then(async () => {
+            try {
+                // 👇 路径拼接改为使用 realDbId
+                const targetPath = localePath({
+                    path: `/orderdetail/${realDbId}`, 
+                    query: { type: order_type.value }
+                });
+                
+                console.log("准备跳转的路径:", targetPath); 
+                await router.push(targetPath);
+                
+            } catch (navErr) {
+                console.error("路由跳转异常:", navErr);
+            } finally {
+                loading.value = false; // 关掉转圈动画
+            }
         });
         
       } catch (err) {
