@@ -314,8 +314,8 @@ export const useApi = () => {
     applyRefund: (payload) => {
       // 动态判断是路线订单还是景点订单
       const endpoint = payload.type === 'tour_order'
-        ? '/api/xilutour.tour_order/refund'
-        : '/api/xilutour.scenery_order/refund';
+        ? '/api/xilutour.tour_order/applyRefund'
+        : '/api/xilutour.scenery_order/applyRefund';
 
       return request(endpoint, {
         method: 'POST',
