@@ -29,6 +29,12 @@
               </NuxtLink>
             </li>
 
+            <li class="nav-item">
+              <NuxtLink class="nav-link" :to="localePath('/tourlist/17')">
+                {{ diyTourDetail.langData.name }}
+              </NuxtLink>
+            </li>
+
             <li class="nav-item dropdown position-static">
               <a
                 class="nav-link dropdown-toggle"
@@ -293,6 +299,7 @@ const {
   getSinglePageNav,
   getSupportedLangs,
   getLanguageJson,
+  getTourCategoryDetail,
   logout: apiLogout,
 } = useApi();
 const { t, locale, setLocaleMessage, getLocaleMessage } = useI18n();
@@ -324,18 +331,20 @@ const { data: navData } = await useAsyncData(
   () => `navbar-data-${locale.value}`,
   async () => {
 
-    const [tourRes, sceneryRes, singlePageRes, langRes] = await Promise.all([
+    const [tourRes, sceneryRes, singlePageRes, langRes, diyTourRes] = await Promise.all([
       getTourCategories(),
       getSceneryCategories(), 
       getSinglePageNav(),
       getSupportedLangs(),
+      getTourCategoryDetail({id: 17})
     ]);
-
+    
     return {
       tourCats: tourRes.data.value,
       sceneryCats: sceneryRes?.data?.value || [],
       singlePages: singlePageRes.data.value,
-      langs: langRes.data.value
+      langs: langRes.data.value,
+      diyTour: diyTourRes.data.value
     };
   },
   { watch: [locale] }
@@ -360,6 +369,8 @@ const supportedLangs = computed(() => {
     return lang;
   });
 });
+const diyTourDetail = computed(() => navData.value?.diyTour.data || {});
+console.log(diyTourDetail);
 
 const currentLangLabel = computed(() => {
   if (!supportedLangs.value.length) return locale.value.toUpperCase();
