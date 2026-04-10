@@ -370,7 +370,6 @@ const supportedLangs = computed(() => {
   });
 });
 const diyTourDetail = computed(() => navData.value?.diyTour.data || {});
-console.log(diyTourDetail);
 
 const currentLangLabel = computed(() => {
   if (!supportedLangs.value.length) return locale.value.toUpperCase();

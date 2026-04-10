@@ -323,7 +323,7 @@ $theme-color: $mainColor;
   color: white;
   border: none;
   &:hover {
-    background-color: darken($theme-color, 10%);
+    background-color: color.adjust($theme-color, $lightness: -10%);
     color: white;
   }
 }
