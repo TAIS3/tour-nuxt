@@ -116,8 +116,15 @@
         </div>
       </div>
       
-      <div v-if="total > limit" class="d-flex justify-content-center mt-4">
-        </div>
+      <div v-if="totalPages > 1" class="d-flex justify-content-center mt-4">
+        <Pagination
+          v-model="page"
+          :total-pages="totalPages"
+          :total-items="total"
+          @page-change="handlePageChange"
+        />
+      </div>
+
     </div>
   </div>
 </template>
@@ -129,6 +136,7 @@ import swal from 'sweetalert';
 const { t } = useI18n();
 const localePath = useLocalePath();
 const router = useRouter();
+const route = useRoute(); // 【新增】引入 route 以获取 URL 参数
 const { getOrderList, applyRefund } = useApi();
 const { getStateName, getPayTypeName, formatDate } = useFormatter();
 
@@ -140,6 +148,9 @@ const orders = ref([]);
 const page = ref(1);
 const limit = ref(10);
 const total = ref(0);
+
+// 【新增】计算总页数
+const totalPages = computed(() => Math.ceil(total.value / limit.value));
 
 const orderTypeTabs = computed(() => [
   { label: t('member.tourOrders') || 'Tour Orders', value: 'tour_order' },
@@ -163,7 +174,6 @@ const getStateValue = (tabString) => {
     default: return 999;       
   }
 };
-
 
 const fetchOrders = async () => {
   loading.value = true;
@@ -190,7 +200,6 @@ const fetchOrders = async () => {
   }
 };
 
-// 核心修复：强转为 Number，防止 "1" === 1 失效
 const getStatusText = (payStatus, orderStatus) => {
   const pStatus = Number(payStatus);
   const oStatus = Number(orderStatus);
@@ -224,6 +233,16 @@ const handleStatusTabChange = (val) => {
   fetchOrders();
 };
 
+// 【新增】处理分页跳转事件
+const handlePageChange = (newPage) => {
+  page.value = newPage;
+  // 翻页后自动滚回顶部
+  if (typeof window !== 'undefined') {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  fetchOrders();
+};
+
 const handlePay = (order) => {
   router.push(localePath({
     path: '/member/pay',
@@ -232,6 +251,7 @@ const handlePay = (order) => {
 };
 
 const handleViewDetails = (order) => {
+  // 注意这里：我们将当前的分类 type 传给了详情页
   router.push(localePath({
     path: `/orderdetail/${order.id}`,
     query: { type: orderTypeTab.value }
@@ -279,6 +299,10 @@ const handleRefund = (order) => {
 };
 
 onMounted(() => {
+  // 【新增】检查 URL 是否有 type 参数 (用于从详情页返回时选中对应的 Tab)
+  if (route.query.type) {
+    orderTypeTab.value = route.query.type;
+  }
   fetchOrders();
 });
 </script>

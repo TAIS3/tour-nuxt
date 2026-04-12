@@ -139,6 +139,18 @@ const handlePageChange = (page) => {
   }
 }
 
+// ✅ 新增：监听当前商品列表，如果为空直接抛出 404
+watch(currentProducts, (newVal) => {
+  // 如果数组不存在，或者长度为 0，说明没有景点数据
+  if (!newVal || newVal.length === 0) {
+    showError({
+      statusCode: 404,
+      message: 'Scenery list is empty or not found.',
+      fatal: true // 💥 必须为 true，强制卸载当前组件渲染 error.vue
+    })
+  }
+}, { immediate: true })
+
 // ----------------------------------------------------------------
 // 6. SEO 设置
 // ----------------------------------------------------------------

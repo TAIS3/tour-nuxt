@@ -107,7 +107,7 @@
                     <div class="price text-danger">
                       <small>¥</small><span class="num">{{ parseFloat(item.salesprice) }}</span>
                     </div>
-                    <button class="btn-book-sm" @click="handleCheckout(item)">{{ t('commonConfig.buyNow', '立即购买') }}</button>
+                    <button class="btn-book-sm" @click="openConfirmModal(item)">{{ t('commonConfig.buyNow', '立即购买') }}</button>
                   </div>
                 </div>
               </div>
@@ -178,6 +178,45 @@
       </div>
     </div>
 
+    <!-- Purchase Confirmation Modal -->
+    <div v-if="showModal" class="modal fade show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5);" @click.self="!isSubmitting && (showModal = false)">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{{ t('commonConfig.confirmPurchase', '确认订单信息') }}</h5>
+            <button type="button" class="btn-close" @click="showModal = false" :disabled="isSubmitting" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <h6 class="mb-3 fw-bold">{{ checkoutItem?.name }}</h6>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span>{{ t('commonConfig.unitPrice', '单价') }}</span>
+              <span class="text-danger">¥{{ parseFloat(checkoutItem?.salesprice || 0).toFixed(2) }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span>{{ t('commonConfig.quantity', '数量') }}</span>
+              <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-outline-secondary px-2 py-0 fs-5" @click="checkoutQuantity > 1 ? checkoutQuantity-- : null">-</button>
+                <input type="number" class="form-control form-control-sm text-center" v-model.number="checkoutQuantity" min="1" style="width: 70px;" />
+                <button class="btn btn-sm btn-outline-secondary px-2 py-0 fs-5" @click="checkoutQuantity++">+</button>
+              </div>
+            </div>
+            <hr />
+            <div class="d-flex justify-content-between align-items-center fw-bold mt-2">
+              <span>{{ t('commonConfig.totalPrice', '总价') }}</span>
+              <span class="text-danger fs-5">¥{{ (parseFloat(checkoutItem?.salesprice || 0) * checkoutQuantity).toFixed(2) }}</span>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-light" @click="showModal = false" :disabled="isSubmitting">{{ t('commonConfig.cancel', '取消') }}</button>
+            <button type="button" class="btn btn-theme" @click="confirmCheckout" :disabled="isSubmitting">
+              <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+              {{ isSubmitting ? t('commonConfig.processing', '处理中...') : t('commonConfig.confirm', '确定') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <CommonPageBanner />
     <CommonContact />
   </div>
@@ -212,18 +251,23 @@ const bannerStyle = computed(() => {
   }
 })
 
-const handleCheckout = async (item) => {
+const showModal = ref(false)
+const checkoutItem = ref(null)
+const checkoutQuantity = ref(1)
+const isSubmitting = ref(false)
+
+const openConfirmModal = (item) => {
   // 检查是否登录
   const token = useCookie('fa-token').value
   if (!token) {
     swal({
-      title: t('common.loginRequiredTitle', '需要登录'),
-      text: t('common.loginRequiredText', '请先登录再进行购买。'),
+      title: t('commonConfig.loginRequiredTitle', '需要登录'),
+      text: t('commonConfig.loginRequiredText', '请先登录再进行购买。'),
       icon: 'warning',
       buttons: {
-        cancel: t('common.cancel', '取消'),
+        cancel: t('commonConfig.cancel', '取消'),
         confirm: {
-          text: t('common.goToLogin', '去登录'),
+          text: t('commonConfig.goToLogin', '去登录'),
           value: true,
         },
       },
@@ -235,18 +279,31 @@ const handleCheckout = async (item) => {
     return
   }
   
+  checkoutItem.value = item
+  checkoutQuantity.value = 1
+  showModal.value = true
+}
+
+const confirmCheckout = async () => {
+  if (!checkoutItem.value || isSubmitting.value) return
+  
+  isSubmitting.value = true
   try {
+    const quantity = parseInt(checkoutQuantity.value) || 1;
     const { data: orderResult, error } = await createSceneryOrder({
-      project_id: item.id,
+      project_id: checkoutItem.value.id,
       scenery_id: parseFloat(sceneryId.value),
-      number: 1
+      buy_num: quantity
     })
 
     if (error.value || orderResult.value?.code !== 1) {
-      throw new Error(orderResult.value?.msg || error.value?.data?.message || t('member.checkoutError', '创建订单失败'))
+      throw new Error(orderResult.value?.msg || error.value?.data?.message || t('conmonConfig.checkoutError', '创建订单失败'))
     }
 
     const order_id = orderResult.value.data.order_no
+
+    // 关闭弹窗
+    showModal.value = false
 
     await navigateTo(localePath({
       path: '/member/pay',
@@ -257,6 +314,8 @@ const handleCheckout = async (item) => {
     }))
   } catch (err) {
     swal({ title: t('commonConfig.error', '错误'), text: err.message, icon: 'error' })
+  } finally {
+    isSubmitting.value = false
   }
 }
 
@@ -401,7 +460,7 @@ $bg-page: #f5f7fa;
   min-height: 100vh;
 }
 
-// Banner
+/* Banner */
 .hero-banner {
   height: 260px;
   background-size: cover;
@@ -426,7 +485,7 @@ $bg-page: #f5f7fa;
   }
 }
 
-// 通用卡片样式
+/* 通用卡片样式 */
 .info-card, .project-card, .sidebar-card {
   background: $bg-page;
   border-radius: $borderRadius;
@@ -451,7 +510,7 @@ $bg-page: #f5f7fa;
   border-radius: $borderRadius;
 }
 
-// A. 核心信息卡片
+/* A. 核心信息卡片 */
 .info-card {
   .price-row {
     color: #ff4d4f; 
@@ -511,10 +570,10 @@ $bg-page: #f5f7fa;
   }
 }
 
-// 【新增】地图容器样式 - 强制正方形
+/* 【新增】地图容器样式 - 强制正方形 */
 .map-square {
   width: 100%;
-  // aspect-ratio: 1/1 是现代浏览器实现正方形最简单的方法
+  /* aspect-ratio: 1/1 是现代浏览器实现正方形最简单的方法 */
   aspect-ratio: 1 / 1; 
   position: relative;
   
@@ -524,11 +583,11 @@ $bg-page: #f5f7fa;
     position: absolute;
     top: 0;
     left: 0;
-    z-index: 1; // 确保地图可点击
+    z-index: 1; /* 确保地图可点击 */
   }
 }
 
-// B. Tab 导航栏
+/* B. Tab 导航栏 */
 .tabs-header {
   display: flex;
   justify-content: space-around;
@@ -566,7 +625,7 @@ $bg-page: #f5f7fa;
   background: $whiteColor;
 }
 
-// C. 景区项目列表
+/* C. 景区项目列表 */
 .projects-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -625,7 +684,7 @@ $bg-page: #f5f7fa;
   }
 }
 
-// PC端侧边栏
+/* PC端侧边栏 */
 .sidebar-card {
   .card-title { 
     font-size: 18px;
@@ -654,7 +713,7 @@ $bg-page: #f5f7fa;
   &:hover { opacity: 0.9; background-color: $theme-color; color: $bg-page;} 
 }
 
-// 移动端底部
+/* 移动端底部 */
 .mobile-bottom-bar {
   position: fixed; bottom: 0; left: 0; width: 100%;
   background: $bg-page; padding: 10px 20px;

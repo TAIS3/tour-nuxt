@@ -7,7 +7,7 @@
     <div class="container pb-5">
       
       <div class="mb-4">
-        <NuxtLink :to="localePath('/member/orderlist')" class="btn btn-outline-secondary btn-sm shadow-sm">
+        <NuxtLink :to="localePath({ path: '/member/orderlist', query: { type: orderType } })" class="btn btn-outline-secondary btn-sm shadow-sm">
           <i class="bi bi-arrow-left me-1"></i> {{ t('member.backToOrders') || 'Back to Orders' }}
         </NuxtLink>
       </div>
@@ -56,6 +56,35 @@
 
             <hr class="text-muted opacity-25">
 
+            <h6 class="fw-bold mt-4 mb-3">{{ t('member.sceneryInfo') || 'Attraction Info' }}</h6>
+            <div v-if="order.order_project" class="d-flex align-items-center mb-4 p-3 bg-light rounded shadow-sm">
+              <NuxtLink :to="localePath('/sceneryarticle/' + order.order_project.scenery_id)" class="me-3 flex-shrink-0">
+                <img :src="order.order_project.thumb_image" alt="scenery image" class="rounded" style="width: 80px; height: 80px; object-fit: cover;">
+              </NuxtLink>
+              <div>
+                <NuxtLink :to="localePath('/sceneryarticle/' + order.order_project.scenery_id)" class="text-decoration-none text-dark fw-bold d-block mb-1 fs-5">
+                  {{ order.order_project.scenery_name }}
+                </NuxtLink>
+                <span class="badge bg-info text-dark mb-1">{{ order.order_project.project_name }}</span>
+              </div>
+            </div>
+
+            <div v-if="order.order_qrcode && order.order_qrcode.length > 0">
+              <h6 class="fw-bold mt-4 mb-3">{{ t('member.verificationCodes') || 'Verification Codes' }}</h6>
+              <div class="list-group mb-4 shadow-sm">
+                <div v-for="(item, index) in order.order_qrcode" :key="index" class="list-group-item d-flex justify-content-between align-items-center py-3">
+                  <span class="fs-5 font-monospace fw-bold text-primary" style="letter-spacing: 2px;">
+                    {{ formatCode(item.code) }}
+                  </span>
+                  <span class="badge rounded-pill px-3 py-2" :class="getCodeStatusClass(item.verifier_status)">
+                    {{ getCodeStatusText(item.verifier_status) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <hr class="text-muted opacity-25">
+
             <h6 class="fw-bold mt-4 mb-3">{{ t('member.customerInfo') || 'Customer Information' }}</h6>
             <p class="card-text mb-1"><strong>{{ t('member.customerName') || 'Name' }}:</strong> {{ order.contact_name || order.name || 'N/A' }}</p>
             <p class="card-text mb-1"><strong>{{ t('member.customerPhone') || 'Phone' }}:</strong> {{ order.contact_mobile || order.mobile || 'N/A' }}</p>
@@ -83,23 +112,51 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import swal from 'sweetalert'; // 确保引入了 swal
 const { getStateName, getPayTypeName, formatDate } = useFormatter();
 
 // 引入国际化和路由工具
 const { t } = useI18n();
 const localePath = useLocalePath();
 const route = useRoute();
+const router = useRouter(); // 预留，部分情况可能用到
 const api = useApi();
 
 const orderId = route.params.id;
+// 接收列表页传过来的 type，如果没有则默认 tour_order
 const orderType = route.query.type || 'tour_order'; 
 
 const pending = ref(true);
 const order = ref(null);
 const error = ref(null);
 
+// 格式化 10 位核验码 (1234-567890)
+const formatCode = (code) => {
+  if (!code) return '';
+  const str = String(code);
+  if (str.length > 4) {
+    return str.slice(0, 4) + '-' + str.slice(4);
+  }
+  return str;
+};
 
-// 新增退款逻辑
+// --- 修改点 2 配套函数：核验码状态与样式 ---
+const getCodeStatusClass = (status) => {
+  const s = Number(status);
+  if (s === 2) return 'bg-dark text-white opacity-75'; // 2 = 已作废
+  if (s === 1) return 'bg-secondary';                  // 1 = 已核销/已使用
+  return 'bg-success';                                 // 0 = 未使用
+};
+
+const getCodeStatusText = (status) => {
+  const s = Number(status);
+  if (s === 2) return t('member.statusVoided') || 'Voided'; // 使用我们新加的多语言 Key
+  if (s === 1) return t('member.codeStatusUsed') || 'Used';
+  return t('member.codeStatusUnused') || 'Unused';
+};
+// ------------------------------------------
+
+// 退款逻辑
 const handleRefund = () => {
   swal({
     title: t('member.refundConfirmTitle') || "Are you sure?",
@@ -117,8 +174,9 @@ const handleRefund = () => {
   }).then(async (willProceed) => {
     if (willProceed) {
       try {
-        const { data: response, error } = await applyRefund({
-          order_id: order.value.order_no, // 传订单号给后端
+        // 修改点 3：这里必须使用 api.applyRefund，否则会报 ReferenceError
+        const { data: response, error } = await api.applyRefund({
+          order_id: order.value.order_no, 
           type: orderType 
         });
 
@@ -128,7 +186,6 @@ const handleRefund = () => {
 
         swal(t('member.refundSuccessTitle') || 'Success', t('member.refundSuccessMsg') || 'Your refund application has been submitted.', 'success');
         
-        // 退款成功后，重新拉取详情刷新页面状态
         pending.value = true;
         const { data: refreshRes } = await api.getOrderDetail({ order_id: parseFloat(orderId), type: orderType });
         if(refreshRes.value.code === 1) order.value = refreshRes.value.data;
