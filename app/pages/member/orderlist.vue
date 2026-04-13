@@ -108,7 +108,7 @@
                   <button @click="handleViewDetails(order)" class="btn btn-outline-secondary btn-sm rounded-pill px-4 ms-2">
                     {{ t('member.viewDetails') || 'Details' }}
                   </button>
-                  <button v-if="order.pay_status == 1 && order.order_status == 1" @click="handleRefund(order)" class="btn btn-outline-danger btn-sm rounded-pill px-4 ms-2">
+                  <button v-if="order.pay_status == 1 && order.order_status == 1 && order.refundStatus == 0" @click="handleRefund(order)" class="btn btn-outline-danger btn-sm rounded-pill px-4 ms-2">
                      {{ t('member.applyRefund') || 'Refund' }}
                   </button>
                 </div>
@@ -202,46 +202,52 @@ const fetchOrders = async () => {
   }
 };
 
-// 修改 getStatusText：严格按照给定的状态字典
+// 修改 getStatusText：增加“退款申请中”的逻辑
 const getStatusText = (payStatus, orderStatus, refundStatus, verifyStatus) => {
   const pStatus = Number(payStatus);
   const oStatus = Number(orderStatus);
   const rStatus = Number(refundStatus);
   const vStatus = Number(verifyStatus);
   
-  // 1. 已退款/已取消 (优先级最高)
-  // order_status: 2=取消, refund_status: 1=退款中, 2=同意退款
-  if (oStatus === 2 || rStatus === 1 || rStatus === 2) {
+  // 1. 退款申请中 (优先级最高，因为此时用户最关心处理进度)
+  // refund_status: 1=退款中
+  if (rStatus === 1) {
+    return t('member.Refunding') || '退款申请中';
+  }
+
+  // 2. 已退款/已取消
+  // order_status: 2=取消, refund_status: 2=同意退款
+  if (oStatus === 2 || rStatus === 2) {
     return t('member.orderTabRefunded') || '已退款';
   }
   
-  // 2. 已完成
+  // 3. 已完成
   // order_status: 3=已完成, 或者 verify_status: 1=已核销
   if (oStatus === 3 || vStatus === 1) {
     return t('member.statusCompleted') || '已完成';
   }
   
-  // 3. 已支付 (进行中，未核销)
-  // pay_status: 1=已支付, 且 order_status: 1=进行中
+  // 4. 已支付 (进行中，未核销)
   if (pStatus === 1) {
     return t('member.statusPaid') || '已支付';
   }
   
-  // 4. 未支付
+  // 5. 未支付
   return t('member.statusUnpaid') || '未支付';
 };
 
-// 修改 getStatusClass：同步颜色逻辑
+// 修改 getStatusClass：退款中为红色，已退款为灰色
 const getStatusClass = (payStatus, orderStatus, refundStatus, verifyStatus) => {
   const pStatus = Number(payStatus);
   const oStatus = Number(orderStatus);
   const rStatus = Number(refundStatus);
   const vStatus = Number(verifyStatus);
   
-  if (oStatus === 2 || rStatus === 1 || rStatus === 2) return 'bg-secondary text-white'; // 退款/取消 -> 灰色
-  if (oStatus === 3 || vStatus === 1) return 'bg-info text-white';                       // 已完成 -> 蓝色
-  if (pStatus === 1) return 'bg-success text-white';                                     // 已支付 -> 绿色
-  return 'bg-warning text-dark';                                                         // 未支付 -> 黄色
+  if (rStatus === 1) return 'bg-danger text-white';                      // 退款中 -> 红色
+  if (oStatus === 2 || rStatus === 2) return 'bg-secondary text-white';  // 已退款/取消 -> 灰色
+  if (oStatus === 3 || vStatus === 1) return 'bg-info text-white';       // 已完成 -> 蓝色
+  if (pStatus === 1) return 'bg-success text-white';                     // 已支付 -> 绿色
+  return 'bg-warning text-dark';                                         // 未支付 -> 黄色
 };
 
 const handleTypeTabChange = (val) => {

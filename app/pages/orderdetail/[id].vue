@@ -38,9 +38,39 @@
                 <p class="fw-bold mb-0">{{ order.order_no }}</p>
               </div>
               <div class="col-sm-6">
-                <p class="text-muted mb-1 small">{{ t('member.orderDate') || 'Order Date' }}</p>
-                <p class="fw-bold mb-0">{{ formatDate(order.createtime) }}</p>
+                <p class="text-muted mb-1 small">{{ t('member.totalAmount') || 'Total Amount' }}</p>
+                <p class="fw-bold fs-5 text-primary mb-0">${{ order.pay_price }}</p>
               </div>
+            </div>
+
+            <div class="row mb-4" v-if="order.pay_type">
+              <div class="col-sm-6 mb-3 mb-sm-0">
+                <p class="text-muted mb-1 small">{{ t('member.payMethod') || 'Payment Method' }}</p>
+                <p class="fw-bold mb-0 text-capitalize">{{ getPayTypeName(order.pay_type) }}</p>
+              </div>
+            </div>
+
+            <div class="bg-light p-3 rounded mb-4 shadow-sm">
+              <div class="row mb-2" v-if="order.createtime">
+                <div class="col-5 text-muted small">{{ t('member.orderDate') || 'Order Date' }}</div>
+                <div class="col-7 fw-bold small text-end">{{ formatDate(order.createtime) }}</div>
+              </div>
+              <div class="row mb-2" v-if="order.paytime">
+                <div class="col-5 text-muted small">{{ t('member.payDate') || 'Pay Date' }}</div>
+                <div class="col-7 fw-bold small text-end">{{ formatDate(order.paytime) }}</div>
+              </div>
+              <template v-if="order.refundtime && !order.completetime">
+                <div class="row mb-0">
+                  <div class="col-5 text-muted small">{{ t('member.refundDate') || 'Refund Date' }}</div>
+                  <div class="col-7 fw-bold small text-end">{{ formatDate(order.refundtime) }}</div>
+                </div>
+              </template>
+              <template v-else-if="order.completetime && !order.refundtime">
+                <div class="row mb-0">
+                  <div class="col-5 text-muted small">{{ t('member.completeDate') || 'Complete Date' }}</div>
+                  <div class="col-7 fw-bold small text-end">{{ formatDate(order.completetime) }}</div>
+                </div>
+              </template>
             </div>
 
             <div class="row mb-4">
@@ -85,9 +115,9 @@
 
             <hr class="text-muted opacity-25">
 
-            <h6 class="fw-bold mt-4 mb-3">{{ t('member.customerInfo') || 'Customer Information' }}</h6>
+            <!-- <h6 class="fw-bold mt-4 mb-3">{{ t('member.customerInfo') || 'Customer Information' }}</h6>
             <p class="card-text mb-1"><strong>{{ t('member.customerName') || 'Name' }}:</strong> {{ order.contact_name || order.name || 'N/A' }}</p>
-            <p class="card-text mb-1"><strong>{{ t('member.customerPhone') || 'Phone' }}:</strong> {{ order.contact_mobile || order.mobile || 'N/A' }}</p>
+            <p class="card-text mb-1"><strong>{{ t('member.customerPhone') || 'Phone' }}:</strong> {{ order.contact_mobile || order.mobile || 'N/A' }}</p> -->
           </div>
           
           <div class="card-footer bg-light d-flex justify-content-between align-items-center py-3">
