@@ -53,9 +53,11 @@
               </div>
               
               <div class="d-flex align-items-center gap-2">
-                <span v-if="order.state" class="text-muted small fw-bold me-1">[{{ getStateName(order.state) }}]</span>
-                <span class="badge rounded-pill px-3 py-2" :class="getStatusClass(order.pay_status, order.order_status)">
-                  {{ getStatusText(order.pay_status, order.order_status) }}
+                <span 
+                  class="badge rounded-pill px-3 py-2" 
+                  :class="getStatusClass(order.pay_status, order.order_status, order.refund_status, order.verify_status)"
+                >
+                  {{ getStatusText(order.pay_status, order.order_status, order.refund_status, order.verify_status) }}
                 </span>
               </div>
             </div>
@@ -200,25 +202,46 @@ const fetchOrders = async () => {
   }
 };
 
-const getStatusText = (payStatus, orderStatus) => {
+// 修改 getStatusText：严格按照给定的状态字典
+const getStatusText = (payStatus, orderStatus, refundStatus, verifyStatus) => {
   const pStatus = Number(payStatus);
   const oStatus = Number(orderStatus);
+  const rStatus = Number(refundStatus);
+  const vStatus = Number(verifyStatus);
   
-  if (oStatus === 3 || oStatus === -1) return t('member.statusRefunded') || 'Refunded/Cancelled';
-  if (oStatus === 2) return t('member.statusCompleted') || 'Completed';
-  if (pStatus === 1) return t('member.statusPaid') || 'Paid';
-  if (pStatus === 0) return t('member.statusUnpaid') || 'Unpaid';
-  return 'Unknown';
+  // 1. 已退款/已取消 (优先级最高)
+  // order_status: 2=取消, refund_status: 1=退款中, 2=同意退款
+  if (oStatus === 2 || rStatus === 1 || rStatus === 2) {
+    return t('member.orderTabRefunded') || '已退款';
+  }
+  
+  // 2. 已完成
+  // order_status: 3=已完成, 或者 verify_status: 1=已核销
+  if (oStatus === 3 || vStatus === 1) {
+    return t('member.statusCompleted') || '已完成';
+  }
+  
+  // 3. 已支付 (进行中，未核销)
+  // pay_status: 1=已支付, 且 order_status: 1=进行中
+  if (pStatus === 1) {
+    return t('member.statusPaid') || '已支付';
+  }
+  
+  // 4. 未支付
+  return t('member.statusUnpaid') || '未支付';
 };
 
-const getStatusClass = (payStatus, orderStatus) => {
+// 修改 getStatusClass：同步颜色逻辑
+const getStatusClass = (payStatus, orderStatus, refundStatus, verifyStatus) => {
   const pStatus = Number(payStatus);
   const oStatus = Number(orderStatus);
+  const rStatus = Number(refundStatus);
+  const vStatus = Number(verifyStatus);
   
-  if (oStatus === 3 || oStatus === -1) return 'bg-secondary text-white';
-  if (oStatus === 2) return 'bg-info text-white';
-  if (pStatus === 1) return 'bg-success text-white';
-  return 'bg-warning text-dark';
+  if (oStatus === 2 || rStatus === 1 || rStatus === 2) return 'bg-secondary text-white'; // 退款/取消 -> 灰色
+  if (oStatus === 3 || vStatus === 1) return 'bg-info text-white';                       // 已完成 -> 蓝色
+  if (pStatus === 1) return 'bg-success text-white';                                     // 已支付 -> 绿色
+  return 'bg-warning text-dark';                                                         // 未支付 -> 黄色
 };
 
 const handleTypeTabChange = (val) => {
