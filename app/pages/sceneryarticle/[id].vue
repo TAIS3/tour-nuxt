@@ -105,9 +105,9 @@
                   <h3 class="item-name text-truncate">{{ item.name }}</h3>
                   <div class="bottom-action mt-auto pt-3 d-flex justify-content-between align-items-center">
                     <div class="price text-danger">
-                      <small>¥</small><span class="num">{{ parseFloat(item.salesprice) }}</span>
+                      <small>¥</small><span class="num">{{ parseFloat(item.salesprice || item.price || 0) || 0 }}</span>
                     </div>
-                    <button class="btn-book-sm" @click="openConfirmModal(item)">{{ t('commonConfig.buyNow', '立即购买') }}</button>
+                    <button class="btn-book-sm" :disabled="!parseFloat(item.salesprice || item.price || 0)" @click="openConfirmModal(item)">{{ t('commonConfig.buyNow', '立即购买') }}</button>
                   </div>
                 </div>
               </div>
@@ -178,44 +178,12 @@
       </div>
     </div>
 
-    <!-- Purchase Confirmation Modal -->
-    <div v-if="showModal" class="modal fade show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5);" @click.self="!isSubmitting && (showModal = false)">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{ t('commonConfig.confirmPurchase', '确认订单信息') }}</h5>
-            <button type="button" class="btn-close" @click="showModal = false" :disabled="isSubmitting" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <h6 class="mb-3 fw-bold">{{ checkoutItem?.name }}</h6>
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <span>{{ t('commonConfig.unitPrice', '单价') }}</span>
-              <span class="text-danger">¥{{ parseFloat(checkoutItem?.salesprice || 0).toFixed(2) }}</span>
-            </div>
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <span>{{ t('commonConfig.quantity', '数量') }}</span>
-              <div class="d-flex align-items-center gap-2">
-                <button class="btn btn-sm btn-outline-secondary px-2 py-0 fs-5" @click="checkoutQuantity > 1 ? checkoutQuantity-- : null">-</button>
-                <input type="number" class="form-control form-control-sm text-center" v-model.number="checkoutQuantity" min="1" style="width: 70px;" />
-                <button class="btn btn-sm btn-outline-secondary px-2 py-0 fs-5" @click="checkoutQuantity++">+</button>
-              </div>
-            </div>
-            <hr />
-            <div class="d-flex justify-content-between align-items-center fw-bold mt-2">
-              <span>{{ t('commonConfig.totalPrice', '总价') }}</span>
-              <span class="text-danger fs-5">¥{{ (parseFloat(checkoutItem?.salesprice || 0) * checkoutQuantity).toFixed(2) }}</span>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-light" @click="showModal = false" :disabled="isSubmitting">{{ t('commonConfig.cancel', '取消') }}</button>
-            <button type="button" class="btn btn-theme" @click="confirmCheckout" :disabled="isSubmitting">
-              <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-              {{ isSubmitting ? t('commonConfig.processing', '处理中...') : t('commonConfig.confirm', '确定') }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <PurchaseConfirmModal
+      v-model:show="showModal"
+      :item="checkoutItem"
+      :is-submitting="isSubmitting"
+      @confirm="handleConfirmCheckout"
+    />
 
     <CommonPageBanner />
     <CommonContact />
@@ -224,6 +192,7 @@
 
 <script setup>
 import swal from 'sweetalert';
+import PurchaseConfirmModal from '~/components/PurchaseConfirmModal.vue';
 // 【核心修改】不要在顶层 import AMapLoader
 // import AMapLoader from '@amap/amap-jsapi-loader'; // <--- 已删除
 import { onUnmounted, shallowRef, onMounted } from 'vue';
@@ -253,7 +222,6 @@ const bannerStyle = computed(() => {
 
 const showModal = ref(false)
 const checkoutItem = ref(null)
-const checkoutQuantity = ref(1)
 const isSubmitting = ref(false)
 
 const openConfirmModal = (item) => {
@@ -280,16 +248,14 @@ const openConfirmModal = (item) => {
   }
   
   checkoutItem.value = item
-  checkoutQuantity.value = 1
   showModal.value = true
 }
 
-const confirmCheckout = async () => {
+const handleConfirmCheckout = async ({ quantity }) => {
   if (!checkoutItem.value || isSubmitting.value) return
   
   isSubmitting.value = true
   try {
-    const quantity = parseInt(checkoutQuantity.value) || 1;
     const { data: orderResult, error } = await createSceneryOrder({
       project_id: checkoutItem.value.id,
       scenery_id: parseFloat(sceneryId.value),
@@ -678,6 +644,7 @@ $bg-page: #f5f7fa;
           font-size: 13px; font-weight: bold;
           transition: opacity 0.3s;
           &:hover { opacity: 0.9; }
+          &:disabled { background: #cccccc; cursor: not-allowed; opacity: 0.8; }
         }
       }
     }

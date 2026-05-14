@@ -34,13 +34,6 @@
             <div class="info-wrap d-flex justify-content-between align-items-center mb-4">
               <div class="d-flex flex-wrap align-items-center">
                 <div class="info-item">
-                  <span class="iconfont icon-jinqian"></span>
-                  <span class="info-item-content">
-                    <span class="item-name">{{ t('tourArticle.price') }}</span>
-                    <span class="item-value">{{ tour.salesprice }}</span>
-                  </span>
-                </div>
-                <div class="info-item">
                   <span class="iconfont icon-date"></span>
                   <span class="info-item-content">
                     <span class="item-name">{{ t('tourArticle.date') }}</span>
@@ -55,9 +48,14 @@
                   </span>
                 </div>
               </div>
-              <button class="btn theme-btn" type="button" @click="handleCheckout">
-                {{ t('tourArticle.buyNow', '立即购买') }}
-              </button>
+              <div class="text-end">
+                <div class="price text-danger fw-bold mb-2">
+                  <small>¥</small><span class="fs-4">{{ parseFloat(tour.salesprice || tour.price || 0) || 0 }}</span>
+                </div>
+                <button class="btn theme-btn" type="button" @click="openConfirmModal(tour)" :disabled="!parseFloat(tour.salesprice || tour.price || 0)">
+                  {{ t('commonConfig.buyNow', '立即购买') }}
+                </button>
+              </div>
             </div>
 
             <h2 class="h4 mb-3">{{ t('tourArticle.travelHighlights') }}</h2>
@@ -105,12 +103,20 @@
       <NoData v-else />
     </section>
 
+    <PurchaseConfirmModal
+      v-model:show="showModal"
+      :item="checkoutItem"
+      :is-submitting="isSubmitting"
+      @confirm="handleConfirmCheckout"
+    />
+
     <CommonPageBanner />
     <CommonContact />
   </div>
 </template>
 
 <script setup>
+import PurchaseConfirmModal from '~/components/PurchaseConfirmModal.vue';
 import swal from 'sweetalert'
 
 // 1. 自动导入
@@ -136,42 +142,60 @@ const bannerStyle = computed(() => {
   }
 })
 
-// 新增：处理直接结算
-const handleCheckout = async () => {
-  if (!tour.value || !tour.value.id) return;
+// Modal and checkout logic
+const showModal = ref(false);
+const checkoutItem = ref(null);
+const isSubmitting = ref(false);
 
-  // 1. 检查是否登录
-  const token = useCookie('fa-token').value;
+const openConfirmModal = (tourItem) => {
+  const token = useCookie('fa-token').value
   if (!token) {
     swal({
-      title: t('common.loginRequiredTitle', '需要登录'),
-      text: t('common.loginRequiredText', '请先登录再进行购买。'),
+      title: t('commonConfig.loginRequiredTitle', '需要登录'),
+      text: t('commonConfig.loginRequiredText', '请先登录再进行购买。'),
       icon: 'warning',
       buttons: {
-        cancel: t('common.cancel', '取消'),
-        confirm: { text: t('common.goToLogin', '去登录'), value: true },
+        cancel: t('commonConfig.cancel', '取消'),
+        confirm: {
+          text: t('commonConfig.goToLogin', '去登录'),
+          value: true,
+        },
       },
     }).then((willRedirect) => {
       if (willRedirect) {
-        navigateTo(localePath(`/login?redirect=${route.fullPath}`));
+        navigateTo(localePath(`/login?redirect=${route.fullPath}`))
       }
-    });
-    return;
+    })
+    return
   }
+  
+  // Adapt the item for the modal to ensure 'name' property exists
+  const itemForModal = {
+    ...tourItem,
+    name: tourItem.langData?.name,
+  };
+  checkoutItem.value = itemForModal;
+  showModal.value = true;
+}
 
-  // 2. 创建订单
+const handleConfirmCheckout = async ({ quantity }) => {
+  if (!checkoutItem.value || isSubmitting.value) return;
+  
+  isSubmitting.value = true;
   try {
     const { data: orderResult, error } = await createTourOrder({
-      tour_id: tour.value.id,
-      number: 1, // 直接购买，数量为1
+      tour_id: checkoutItem.value.id,
+      buy_num: quantity,
     });
 
     if (error.value || orderResult.value?.code !== 1) {
-      throw new Error(orderResult.value?.msg || error.value?.data?.message || t('member.checkoutError', '创建订单失败'));
+      throw new Error(orderResult.value?.msg || error.value?.data?.message || t('commonConfig.checkoutError', '创建订单失败'));
     }
 
-    // 3. 导航到支付页面
-    const order_id = orderResult.value.data.order_id;
+    const order_id = orderResult.value.data.order_no;
+
+    showModal.value = false;
+
     await navigateTo(localePath({
       path: '/member/pay',
       query: { 
@@ -179,7 +203,6 @@ const handleCheckout = async () => {
         type: 'tour_order'
       }
     }));
-
   } catch (err) {
     swal({ title: t('commonConfig.error', '错误'), text: err.message, icon: 'error' });
   }

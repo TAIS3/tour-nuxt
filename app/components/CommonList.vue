@@ -1,5 +1,6 @@
 <template>
-  <div class="row g-3 sm:g-4">
+  <div>
+    <div class="row g-3 sm:g-4">
     <div v-for="product in products" :key="product.id" class="col-6 col-md-4">
       <div
         class="tour-card bg-white rounded-2 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 h-100"
@@ -26,8 +27,13 @@
           </p>
 
           <div v-if="articleType === 'tourarticle'" class="d-flex justify-between justify-content-between align-items-center control-bottom pt-3">
-            <button class="btn btn-xs btn-sm theme-btn">Add to Cart</button>
-            
+            <div class="d-flex align-items-center gap-2">
+              <div class="text-danger fw-bold mb-0">
+                <small>¥</small><span class="fs-5">{{ parseFloat(product.salesprice || product.price || 0) || 0 }}</span>
+              </div>
+              <button class="btn btn-xs btn-sm theme-btn" :disabled="!parseFloat(product.salesprice || product.price || 0)" @click="openConfirmModal(product)">{{ t('commonConfig.buyNow', '立即购买') }}</button>
+            </div>
+
             <NuxtLink
               :to="localePath(`/${articleType}/${product.id}`)"
               class="text-theme fw-medium d-flex items-center gap-1 text-sm text-decoration-none"
@@ -39,12 +45,22 @@
         </div>
       </div>
     </div>
+    </div>
+
+    <PurchaseConfirmModal
+      v-model:show="showModal"
+      :item="checkoutItem"
+      :is-submitting="isSubmitting"
+      @confirm="handleConfirmCheckout"
+    />
   </div>
 </template>
 
 <script setup>
-// import { baseUrl } from '@/config'
-// 不需要 import useRouter，Nuxt 自动导入
+import swal from 'sweetalert';
+import PurchaseConfirmModal from '~/components/PurchaseConfirmModal.vue';
+
+const { createTourOrder } = useApi(); // 假设 useApi() 中有 createTourOrder
 
 const props = defineProps({
   products: {
@@ -59,12 +75,73 @@ const props = defineProps({
   }
 })
 
+const { t } = useI18n();
+const localePath = useLocalePath();
+const route = useRoute();
 
-const localePath = useLocalePath()
+const showModal = ref(false);
+const checkoutItem = ref(null);
+const isSubmitting = ref(false);
 
-// ❌ 移除了 goDetail 函数
-// 1. 避免了 window is not defined 报错
-// 2. 避免了手动拼接字符串的繁琐
+const openConfirmModal = (item) => {
+  const token = useCookie('fa-token').value;
+  if (!token) {
+    swal({
+      title: t('commonConfig.loginRequiredTitle', '需要登录'),
+      text: t('commonConfig.loginRequiredText', '请先登录再进行购买。'),
+      icon: 'warning',
+      buttons: {
+        cancel: t('commonConfig.cancel', '取消'),
+        confirm: {
+          text: t('commonConfig.goToLogin', '去登录'),
+          value: true,
+        },
+      },
+    }).then((willRedirect) => {
+      if (willRedirect) {
+        navigateTo(localePath(`/login?redirect=${route.fullPath}`));
+      }
+    });
+    return;
+  }
+
+  checkoutItem.value = item;
+  showModal.value = true;
+};
+
+const handleConfirmCheckout = async ({ quantity }) => {
+  if (!checkoutItem.value || isSubmitting.value) return;
+
+  isSubmitting.value = true;
+  try {
+    // 假设创建旅行团订单的API是 createTourOrder
+    const { data: orderResult, error } = await createTourOrder({
+      tour_id: checkoutItem.value.id,
+      buy_num: quantity,
+    });
+
+    if (error.value || orderResult.value?.code !== 1) {
+      throw new Error(orderResult.value?.msg || error.value?.data?.message || t('commonConfig.checkoutError', '创建订单失败'));
+    }
+
+    const order_id = orderResult.value.data.order_no;
+
+    showModal.value = false;
+
+    await navigateTo(localePath({
+      path: '/member/pay',
+      query: {
+        order_id: order_id,
+        type: 'tour_order', // 假设旅行团订单类型是 'tour_order'
+      },
+    }));
+  } catch (err) {
+    swal({ title: t('commonConfig.error', '错误'), text: err.message, icon: 'error' });
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
 </script>
 
 <style lang="scss">
