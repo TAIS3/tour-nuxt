@@ -380,4 +380,38 @@ $theme-color: $mainColor;
     color: white;
   }
 }
+
+@media (max-width: 767.98px) {
+  .nav-pills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 5px; 
+    -webkit-overflow-scrolling: touch;
+  }
+  .pills-type {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+  .card-body .d-flex.justify-content-between.align-items-center.mt-3 {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 15px;
+    > div:last-child {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 10px;
+      .btn {
+        margin-left: 0 !important;
+      }
+    }
+  }
+}
 </style>

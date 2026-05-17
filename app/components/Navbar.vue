@@ -40,8 +40,8 @@
                 class="nav-link dropdown-toggle"
                 href="#"
                 role="button"
-                data-bs-toggle="dropdown"
-                @click.prevent="isMobile && toggleDropdown($event)"
+                :data-bs-toggle="isMobile ? null : 'dropdown'"
+                @click.prevent="toggleDropdown($event)"
               >
                 {{ t("commonConfig.scenery") || 'Scenery' }}
               </a>
@@ -63,7 +63,7 @@
                     <div class="container-fluid">
                       <div class="row">
                         <div 
-                          class="col-lg-3 col-md-6 mb-4" 
+                          class="col-lg-3 col-md-6 mb-4 children-item" 
                           v-for="cat in sceneryCategoryList" 
                           :key="cat.id"
                         >
@@ -106,8 +106,8 @@
                 class="nav-link dropdown-toggle"
                 href="#"
                 role="button"
-                data-bs-toggle="dropdown"
-                @click.prevent="isMobile && toggleDropdown($event)"
+                :data-bs-toggle="isMobile ? null : 'dropdown'"
+                @click.prevent="toggleDropdown($event)"
               >
                 {{ t("commonConfig.tour") || 'Tour' }}
               </a>
@@ -130,7 +130,7 @@
                     <div class="container-fluid">
                       <div class="row">
                         <div 
-                          class="col-lg-3 col-md-6 mb-4" 
+                          class="col-lg-3 col-md-6 mb-4 children-item" 
                           v-for="cat in tourCategoryList" 
                           :key="cat.id"
                         >
@@ -173,13 +173,14 @@
                 class="nav-link dropdown-toggle"
                 href="#"
                 role="button"
-                data-bs-toggle="dropdown"
+                :data-bs-toggle="isMobile ? null : 'dropdown'"
+                @click.prevent="toggleDropdown($event)"
               >
                 {{ t("commonConfig.aboutus") }}
               </a>
               <ul class="dropdown-menu simple-menu border-0 shadow-lg p-2">
                 <template v-if="singlePageList && singlePageList.length">
-                  <li v-for="child in singlePageList" :key="child.id">
+                  <li v-for="child in singlePageList" :key="child.id" class="children-item">
                     <NuxtLink
                       class="dropdown-item rounded"
                       :to="localePath(`/singlepage/${child.id}`)"
@@ -196,9 +197,10 @@
                 class="nav-link dropdown-toggle lang-btn d-inline-flex align-items-center"
                 href="#"
                 role="button"
-                data-bs-toggle="dropdown"
+                :data-bs-toggle="isMobile ? null : 'dropdown'"
+                @click.prevent="toggleDropdown($event)"
               >
-                <i class="iconfont icon-global me-2">🌐</i> {{ currentLangLabel }}
+                {{ currentLangLabel }} <i class="iconfont icon-global ms-2">🌐</i>
               </a>
               <ul class="dropdown-menu dropdown-menu-end simple-menu border-0 shadow-lg p-2">
                 <li v-for="lang in supportedLangs" :key="lang.code || lang">
@@ -215,8 +217,8 @@
             </li>
 
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle lang-btn" href="#" role="button" data-bs-toggle="dropdown">
-                <i class="bi bi-person-fill me-2"></i>{{ t('commonConfig.member') }}
+              <a class="nav-link dropdown-toggle lang-btn d-inline-flex align-items-center" href="#" role="button" :data-bs-toggle="isMobile ? null : 'dropdown'" @click.prevent="toggleDropdown($event)">
+                {{ t('commonConfig.member') }} <i class="bi bi-person-fill ms-2"></i>
               </a>
               <ul class="dropdown-menu simple-menu border-0 shadow-lg p-2">
                 <template v-if="!isLoggedIn">
@@ -306,6 +308,7 @@ const { t, locale, setLocaleMessage, getLocaleMessage } = useI18n();
 const langStore = useLangStore();
 const localePath = useLocalePath();
 const switchLocalePath = useSwitchLocalePath();
+const route = useRoute();
 const loadingIndicator = useLoadingIndicator();
 const router = useRouter();
 
@@ -319,6 +322,23 @@ onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
 })
+
+watch(() => route.fullPath, () => {
+  if (process.client) {
+    document.querySelectorAll('.navbar-nav .nav-item.dropdown').forEach(item => {
+      item.classList.remove('mobile-expanded');
+    });
+
+    // 移动端路由跳转后，自动收起折叠主导航
+    if (isMobile.value) {
+      const toggler = document.querySelector('.navbar-toggler');
+      const navbarNav = document.getElementById('navbarNav');
+      if (toggler && navbarNav && navbarNav.classList.contains('show')) {
+        toggler.click(); // 利用 Bootstrap 原生点击事件触发收回动画
+      }
+    }
+  }
+});
 
 const logout = async () => {
   await apiLogout(); // Call the API to invalidate the token on the server
@@ -390,7 +410,18 @@ const resolvePath = (item, type = 'tour') => {
 };
 
 const toggleDropdown = (event) => {
-  // Mobile Only
+  if (!isMobile.value) return;
+  
+  const currentItem = event.currentTarget.closest('.nav-item');
+  const isExpanded = currentItem.classList.contains('mobile-expanded');
+  
+  document.querySelectorAll('.navbar-nav .nav-item.dropdown').forEach(item => {
+    item.classList.remove('mobile-expanded');
+  });
+  
+  if (!isExpanded) {
+    currentItem.classList.add('mobile-expanded');
+  }
 };
 
 const handleLangSwitch = async (targetLang) => {
@@ -452,18 +483,15 @@ $hover-gold: #F2CC8F;  // 金色高亮
         content: "\f282";
         display: inline-block;
         font-family: bootstrap-icons;
-        position: absolute;
-        right: -5px;
-        border: 0;
-        top: 50%;
-        transform: translateY(-50%);
         transition: transform 0.3s;
+                order: 1; /* 强制将图标排序到文字之后 */
+                margin-left: 6px; /* 图标与文字间的间距 */
       }
     }
     &:hover{
       .dropdown-toggle{
         &::before {
-          transform: translateY(-50%) rotate(180deg);
+                  transform: rotate(180deg);
           transition: transform 0.3s;
         }
       }
@@ -500,6 +528,8 @@ $hover-gold: #F2CC8F;  // 金色高亮
     }
   }
   .nav-link {
+    display: inline-flex;
+    align-items: center; /* 保证文字和图标无论 PC 还是移动端绝对垂直居中 */
     color: rgba(255, 255, 255, 0.9);
     position: relative;
     font-weight: 500;
@@ -667,7 +697,6 @@ $hover-gold: #F2CC8F;  // 金色高亮
   .container.position-relative {
     position: static !important;
   }
-
 }
 
 // 【新增】定义动画关键帧
@@ -701,38 +730,79 @@ $hover-gold: #F2CC8F;  // 金色高亮
   .navbar-collapse {
     // 这里的颜色改为你的深色主题变量
     background-color: $theme-color; 
-    position: absolute;
-    top: 100%;
+    position: fixed;
+    top: 65px;
     left: 0;
     right: 0;
     z-index: 1000;
     padding: 0;
-    max-height: 85vh;
+    max-height: calc(100vh - 65px);
     overflow-y: auto;
     border-top: 1px solid rgba(255,255,255,0.1);
+    width: 100%;
+  }
+  .navbar-dark{
+    .navbar-nav{
+      padding: 10px 20px 30px;
+
+      // 移动端不需要 Hover 桥梁，也不需要下划线
+      .nav-item {
+        margin-bottom: 0;
+        padding-bottom: 0 !important;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+      }
+    }
   }
 
-  .navbar-nav {
-    padding: 20px;
-  }
-
-  // 移动端不需要 Hover 桥梁，也不需要下划线
-  .nav-item {
-    margin-bottom: 0;
-    padding-bottom: 0 !important;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-  }
 
   .nav-link {
     padding: 15px 0 !important;
     font-size: 16px;
     color: #fff !important;
     &::after { display: none; } // 禁用下划线动画
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* 平滑手风琴下拉效果 */
+  .navbar-nav .dropdown-menu {
+    display: block !important; 
+    max-height: 0;
+    overflow: hidden;
+    padding: 0 !important;
+    margin: 0 !important;
+    opacity: 0;
+    background-color: rgba(0, 0, 0, 0.15) !important;
+    border-radius: 8px;
+    border: none;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease, padding 0.4s ease;
+    box-shadow: none !important;
+  }
+
+  .nav-item.mobile-expanded > .dropdown-menu {
+    max-height: 2000px;
+    opacity: 1;
+    padding: 10px 0 !important;
+    margin-bottom: 10px !important;
+  }
+
+  /* 旋转箭头动画 */
+  .nav-item .dropdown-toggle::before {
+    position: static !important;
+    transform: none !important;
+    transition: transform 0.3s ease;
+    margin-left: 10px;
+  }
+
+  .nav-item.mobile-expanded .dropdown-toggle::before {
+    transform: rotate(180deg) !important;
   }
 
   // 【核心】强制重置下拉菜单样式：去阴影、去定位、去背景
   .mega-menu, .simple-menu {
-    position: static; 
+    position: static !important; 
     float: none;
     width: auto;
     margin-top: 0;
@@ -740,7 +810,16 @@ $hover-gold: #F2CC8F;  // 金色高亮
     border: 0;
     box-shadow: none !important;
     padding-left: 15px; // 稍微缩进表示层级
-    padding-bottom: 10px;
+    min-width: 100%;
+    max-width: 100%;
+    .children-item{
+      margin-bottom: 0;
+    }
+  }
+  .mega-menu{
+    .mega-menu-inner{
+      min-height: auto;
+    }
   }
 
   // 确保左侧装饰图不占位 (虽然 template 加了 d-none，这里双保险)
@@ -749,7 +828,7 @@ $hover-gold: #F2CC8F;  // 金色高亮
   }
 
   .mega-right {
-    padding: 0 !important;
+    padding: 0 15px !important;
   }
 
   // 调整子菜单文字颜色
@@ -762,7 +841,16 @@ $hover-gold: #F2CC8F;  // 金色高亮
 
   .menu-link, .dropdown-item {
     color: #fff !important; // 链接亮白
-    padding: 8px 0;
+    padding: 10px 15px !important;
+    display: block;
+  }
+
+  /* 覆盖部分PC移动端不协调的语言及会员圆角按钮样式 */
+  .lang-btn {
+    border: none !important;
+    padding: 15px 0 !important;
+    background: transparent !important;
+    font-size: 16px !important;
   }
 }
 

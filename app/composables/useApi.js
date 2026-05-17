@@ -323,5 +323,20 @@ export const useApi = () => {
         body: { order_no: payload.order_id } 
       });
     },
+
+    // 30. 新增：客户联系人
+    addContact: (payload) => {
+      return request('/api/common/addContact', {
+        method: 'POST',
+        body: payload
+      });
+    },
+
+    // 31. 获取图形验证码 (API 返回 Base64 与 ID)
+    getCaptcha: () => {
+      return request(`/api/common/captcha?t=${new Date().getTime()}`, {
+        method: 'GET'
+      });
+    }
   }
 }

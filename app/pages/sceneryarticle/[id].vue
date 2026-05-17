@@ -215,6 +215,7 @@ const bannerStyle = computed(() => {
   return {
     backgroundImage: `url(${bannerImg})`,
     height: 'calc(100vw / 1920 * 595)',
+    minHeight: '200px',
     maxHeight: '595px',
     marginBottom: '0'
   }
@@ -695,6 +696,28 @@ $bg-page: #f5f7fa;
       display: flex; flex-direction: column; align-items: center;
       font-size: 10px; color: $text-sub; cursor: pointer;
       .iconfont { font-size: 22px; margin-bottom: 2px; color: $text-main; }
+    }
+  }
+}
+
+@media (max-width: 767.98px) {
+  .tabs-header {
+    overflow-x: auto;
+    white-space: nowrap;
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 5px;
+    
+    .tab-item {
+      flex: 0 0 auto;
+    }
+  }
+  .title-row {
+    flex-direction: column;
+    align-items: flex-start !important;
+    .view-count {
+      align-self: flex-start;
+      margin-top: 5px;
     }
   }
 }

@@ -137,6 +137,7 @@ const bannerStyle = computed(() => {
   return {
     backgroundImage: `url(${bannerImg})`,
     height: 'calc(100vw / 1920 * 595)',
+    minHeight: '200px',
     maxHeight: '595px',
     marginBottom: '0'
   }
@@ -184,8 +185,11 @@ const handleConfirmCheckout = async ({ quantity }) => {
   isSubmitting.value = true;
   try {
     const { data: orderResult, error } = await createTourOrder({
-      tour_id: checkoutItem.value.id,
+      tour_id: parseFloat(checkoutItem.value.id || tourId.value),
       buy_num: quantity,
+      // 如果后端需要验价或计算，补充传入单价和总价（根据实际API决定是否保留）
+      price: parseFloat(checkoutItem.value.salesprice || checkoutItem.value.price || 0),
+      total_price: parseFloat((parseFloat(checkoutItem.value.salesprice || checkoutItem.value.price || 0) * quantity).toFixed(2))
     });
 
     if (error.value || orderResult.value?.code !== 1) {
@@ -205,6 +209,8 @@ const handleConfirmCheckout = async ({ quantity }) => {
     }));
   } catch (err) {
     swal({ title: t('commonConfig.error', '错误'), text: err.message, icon: 'error' });
+  } finally {
+    isSubmitting.value = false;
   }
 }
 
@@ -402,5 +408,23 @@ h2.h4 {
 .price-highlight {
   color: #e63946;
   font-weight: bold;
+}
+
+@media (max-width: 767.98px) {
+  .info-wrap {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+  .info-item {
+    margin-bottom: 15px;
+  }
+  .info-wrap .text-end {
+    text-align: left !important;
+    width: 100%;
+    margin-top: 15px;
+  }
+  .info-wrap .text-end .btn {
+    width: 100%;
+  }
 }
 </style>

@@ -60,8 +60,6 @@
 import swal from 'sweetalert';
 import PurchaseConfirmModal from '~/components/PurchaseConfirmModal.vue';
 
-const { createTourOrder } = useApi(); // 假设 useApi() 中有 createTourOrder
-
 const props = defineProps({
   products: {
     type: Array,
@@ -76,6 +74,7 @@ const props = defineProps({
 })
 
 const { t } = useI18n();
+const { createTourOrder } = useApi();
 const localePath = useLocalePath();
 const route = useRoute();
 
@@ -114,10 +113,12 @@ const handleConfirmCheckout = async ({ quantity }) => {
 
   isSubmitting.value = true;
   try {
-    // 假设创建旅行团订单的API是 createTourOrder
     const { data: orderResult, error } = await createTourOrder({
-      tour_id: checkoutItem.value.id,
+      tour_id: parseFloat(checkoutItem.value.id),
       buy_num: quantity,
+      // 补充价格参数以防后端验单缺失（根据实际API要求调整）
+      price: parseFloat(checkoutItem.value.salesprice || checkoutItem.value.price || 0),
+      total_price: parseFloat((parseFloat(checkoutItem.value.salesprice || checkoutItem.value.price || 0) * quantity).toFixed(2))
     });
 
     if (error.value || orderResult.value?.code !== 1) {
@@ -132,7 +133,7 @@ const handleConfirmCheckout = async ({ quantity }) => {
       path: '/member/pay',
       query: {
         order_id: order_id,
-        type: 'tour_order', // 假设旅行团订单类型是 'tour_order'
+        type: 'tour_order',
       },
     }));
   } catch (err) {
@@ -205,6 +206,15 @@ p.sub_title {
   .btn {
     padding: 0.25rem 0.5rem;
     font-size: 0.75rem;
+  }
+  .control-bottom {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px;
+    
+    .text-theme {
+      align-self: flex-end;
+    }
   }
 }
 </style>

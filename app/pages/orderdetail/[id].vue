@@ -27,9 +27,14 @@
         <div class="card shadow-sm border-0">
           <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
             <h5 class="mb-0 fw-bold">{{ t('member.orderInfo') || 'Order Information' }}</h5>
-            <span class="badge" :class="order.pay_status == 1 ? 'bg-success' : 'bg-warning text-dark'">
-              {{ order.pay_status == 1 ? (t('member.statusPaid') || 'Paid') : (t('member.statusUnpaid') || 'Unpaid') }}
-            </span>
+            <div>
+              <span v-if="order.refund_status > 0" class="badge me-2" :class="getRefundStatusClass(order.refund_status)">
+                {{ getRefundStatusText(order.refund_status) }}
+              </span>
+              <span class="badge" :class="order.pay_status == 1 ? 'bg-success' : 'bg-warning text-dark'">
+                {{ order.pay_status == 1 ? (t('member.statusPaid') || 'Paid') : (t('member.statusUnpaid') || 'Unpaid') }}
+              </span>
+            </div>
           </div>
           <div class="card-body p-4">
             <div class="row mb-4">
@@ -186,6 +191,23 @@ const getCodeStatusText = (status) => {
 };
 // ------------------------------------------
 
+// --- 退款状态与样式 ---
+const getRefundStatusClass = (status) => {
+  const s = Number(status);
+  if (s === 1) return 'bg-danger text-white';    // 1 = 退款申请中
+  if (s === 2) return 'bg-secondary text-white'; // 2 = 退款成功
+  if (s === 3) return 'bg-dark text-white';      // 3 = 退款被拒/失败
+  return '';
+};
+
+const getRefundStatusText = (status) => {
+  const s = Number(status);
+  if (s === 1) return t('member.Refunding') || '退款申请中';
+  if (s === 2) return t('member.orderTabRefunded') || '已退款';
+  if (s === 3) return t('member.refundFailed') || 'Refund Failed';
+  return '';
+};
+
 // 退款逻辑
 const handleRefund = () => {
   swal({
@@ -249,3 +271,18 @@ onMounted(async () => {
   }
 });
 </script>
+
+<style lang="scss" scoped>
+@media (max-width: 575.98px) {
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+  .list-group-item {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+}
+</style>

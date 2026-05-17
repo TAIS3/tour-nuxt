@@ -1610,8 +1610,14 @@ body{
   }
 
   .hero-section {
+    &.hero-section-top{
+      padding-top: 50px;
+    }
     .container {
       padding-top: 0;
+      &.container-top {
+        padding-top: 0;
+      }
     }
 
     &>svg {
