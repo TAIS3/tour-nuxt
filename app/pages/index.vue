@@ -98,7 +98,7 @@
           </div>
 
           <div class="col-lg-5 col-12 order-lg-2 order-1 form-wrap shadow">
-            <form action="#" method="post" class="custom-form contact-form" role="form">
+            <form @submit.prevent="handleSubscribe" class="custom-form contact-form" role="form">
               <div class="row">
                 <div class="col-lg-12 col-md-12 col-12">
                   <div class="form-floating">
@@ -108,9 +108,10 @@
                       id="full-name"
                       class="form-control"
                       placeholder="Full Name"
+                      v-model="formData.name"
                       required=""
                     />
-                    <label for="floatingInput">Full Name</label>
+                    <label for="full-name">Full Name</label>
                   </div>
                 </div>
 
@@ -123,23 +124,57 @@
                       pattern="[^ @]*@[^ @]*"
                       class="form-control"
                       placeholder="Email address"
+                      v-model="formData.email"
                       required=""
                     />
-                    <label for="floatingInput">Email address</label>
+                    <label for="email">Email address</label>
                   </div>
                 </div>
 
                 <div class="col-lg-12 col-12">
                   <div class="form-floating">
-                    <textarea
+                    <input
+                      type="tel"
+                      name="phone"
+                      id="phone"
                       class="form-control"
-                      id="message"
-                      name="message"
-                      placeholder="Describe message here"
-                    ></textarea>
-                    <label for="floatingTextarea">Message</label>
+                      placeholder="Phone Number"
+                      v-model="formData.phone"
+                      required=""
+                    />
+                    <label for="phone">Phone Number</label>
                   </div>
-                  <button type="submit" class="form-control">Submit</button>
+                </div>
+
+                <div class="col-lg-12 col-12">
+                  <div class="input-group mb-3" style="height: 58px;">
+                    <div class="form-floating flex-grow-1 h-100">
+                      <input
+                        type="text"
+                        class="form-control h-100"
+                        id="captcha"
+                        placeholder="Captcha"
+                        v-model="formData.captcha"
+                        required=""
+                        style="border-top-right-radius: 0; border-bottom-right-radius: 0;"
+                      />
+                      <label for="captcha">Captcha</label>
+                    </div>
+                    <img
+                      :src="captchaUrl" 
+                      @click="refreshCaptcha" 
+                      alt="captcha" 
+                      title="Click to refresh"
+                      style="width: 120px; object-fit: cover; cursor: pointer; border: 1px solid #ced4da; border-left: none; border-radius: 0 0.375rem 0.375rem 0;"
+                    />
+                  </div>
+                </div>
+
+                <div class="col-lg-12 col-12">
+                  <button type="submit" class="form-control" :disabled="isSubmitting || submitCooldown > 0">
+                    <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    {{ isSubmitting ? 'Submitting...' : (submitCooldown > 0 ? `${submitCooldown}s` : 'Submit') }}
+                  </button>
                 </div>
               </div>
             </form>
@@ -151,10 +186,12 @@
 </template>
 
 <script setup>
+import swal from 'sweetalert'
+
 // 1. 自动导入
 // safeContent, setSectionClass, setContainerCLass, getImageUrl 等工具函数通常由 Nuxt 自动导入
 const { t, locale } = useI18n()
-const { getBanner } = useApi()
+const { getBanner, getCaptcha, addContact } = useApi()
 
 // 2. 数据获取
 const { data: bannerRes } = await useAsyncData(
@@ -187,6 +224,71 @@ const banner3 = computed(() => bannerData.value['banner3'])
 const banner4 = computed(() => bannerData.value['banner4'])
 const banner5 = computed(() => bannerData.value['banner5'])
 const banner6 = computed(() => bannerData.value['banner6'])
+
+// ----------------------------------------------------------------
+// 4. 联系我们表单处理 (带图形验证码)
+// ----------------------------------------------------------------
+const formData = ref({
+  name: '',
+  email: '',
+  phone: '',
+  captcha: '',
+  captcha_id: ''
+})
+
+const isSubmitting = ref(false)
+const submitCooldown = ref(0)
+let cooldownTimer = null
+// 图形验证码基础接口地址 (请根据实际后端接口替换)
+const captchaBaseUrl = '/api/common/captcha' 
+const captchaUrl = ref('')
+
+const refreshCaptcha = () => {
+  // 附加时间戳防止浏览器缓存相同的 URL
+  captchaUrl.value = `${captchaBaseUrl}?t=${new Date().getTime()}`
+}
+
+onMounted(() => {
+  refreshCaptcha()
+})
+
+const handleSubscribe = async () => {
+  if (isSubmitting.value || submitCooldown.value > 0) return
+
+  formData.value.captcha = (formData.value.captcha || '').trim()
+  if (!formData.value.captcha) {
+    swal('Notice', 'Please enter the captcha.', 'warning')
+    return
+  }
+  
+  const captchaRegex = /^[A-Za-z0-9]{4,6}$/
+  if (!captchaRegex.test(formData.value.captcha)) {
+    swal('Notice', 'Invalid captcha format. (4-6 chars)', 'warning')
+    return
+  }
+
+  isSubmitting.value = true
+  try {
+    const { data: res, error } = await addContact(formData.value)
+    if (error.value || res.value?.code !== 1) throw new Error(res.value?.msg || error.value?.data?.message || 'Submit failed')
+    
+    swal('Success', 'Submitted successfully, we will contact you soon!', 'success')
+    
+    formData.value = { email: '', phone: '', name: '', captcha: '', captcha_id: '' }
+    refreshCaptcha()
+
+    submitCooldown.value = 30
+    cooldownTimer = setInterval(() => {
+      submitCooldown.value--
+      if (submitCooldown.value <= 0) clearInterval(cooldownTimer)
+    }, 1000)
+  } catch (err) {
+    swal('Error', err.message, 'error')
+    refreshCaptcha()
+  } finally {
+    isSubmitting.value = false
+  }
+}
 
 // 4. 辅助函数：处理背景图样式
 const getSectionStyle = (item) => {
