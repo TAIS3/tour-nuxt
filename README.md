@@ -1,75 +1,39 @@
-# Nuxt Minimal Starter
+# EZ Travel Platform (EZ 旅游综合预订平台)
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+> 🚀 一个由全栈独立开发者构建的现代化、高安全性、多语言旅游电商预订平台。
 
-## Setup
+EZ 旅游是一个深度的全栈旅游电商项目，旨在为**单景点门票**和**多日定制旅游线路**提供无缝的预订体验。本项目深度整合了 Nuxt 3 (SSR) 与后端 PHP (FastAdmin) 架构，完美处理了涵盖跨国多语言 (I18n) 路由、实时动态定价、基于日历的复杂库存管理以及统一国际支付网关 (PayPal) 的真实业务闭环。
 
-Make sure to install dependencies:
+## ✨ 核心特性 (Core Features)
 
-```bash
-# npm
-npm install
+- **🌍 深度多语言支持 (Nuxt I18n)**：实现了无缝的多语言 SSR 路由切换，并在数据库层面实现了多语言字典的同步与查询。
+- **🛍️ 复杂的电商业务闭环**：支持单品（景点门票）与组合商品（多日游线路）的预订，包含基于出游日期的实时动态定价与库存行锁。
+- **💳 统一国际支付网关**：基于 DRY 原则重构的底层支付接口，无缝集成 PayPal REST API，包含完整的防断网掉单（Webhook）机制与异步扣款验证。
+- **📱 现代化响应式 UI**：采用 Vue 3 + Tailwind CSS / UnoCSS 构建，包含移动端优先的交互设计（如丝滑的移动端侧滑抽屉导航 Drawer）。
+- **🛡️ 零信任架构与大厂级安全防护**：
+  - **防前端篡改**：订单金额严格执行“后端算价”与“库存行锁”底线。
+  - **防越权 (IDOR)**：在退款 (Refund) 与验票核销接口实施严格的归属权与角色校验。
+  - **SQL 加固**：防范复杂的条件过滤漏洞与多表联查风险。
 
-# pnpm
-pnpm install
+## 🛠️ 技术栈 (Tech Stack)
 
-# yarn
-yarn install
+### 前端 (Frontend)
+* **框架**: Vue 3 (Composition API) + Nuxt 3 (SSR 渲染)
+* **样式**: Tailwind CSS / UnoCSS
+* **国际化**: `@nuxtjs/i18n`
+* **状态管理**: Pinia
+* **网络请求**: Axios / Nuxt `useFetch`
 
-# bun
-bun install
-```
+### 后端 (Backend)
+* **框架**: PHP + ThinkPHP 5 + FastAdmin
+* **数据库**: MySQL (复杂的关联查询与事务控制)
+* **缓存**: Redis (用于防并发与高频数据缓存)
+* **集成**: PayPal API
 
-## Development Server
+## 💡 架构亮点 (Architecture Highlights)
 
-Start the development server on `http://localhost:3000`:
+1. **统一支付网关 (Payment.php)**: 抛弃了传统的业务代码耦合，抽象出统一的支付网关控制器，通过策略模式动态处理不同的订单类型（门票/线路），极大降低了后续扩展（如租车、酒店订单）的维护成本。
+2. **安全驱动开发 (Security-Driven)**: 针对传统扫描工具难以发现的“业务逻辑漏洞”进行了深度防御设计，所有资金操作接口（退款、支付）均具备严格的上下文语义鉴权。
 
-```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## 🧑‍💻 开发者 (Developer)
+独立设计与开发 (Solo Designed & Developed)
